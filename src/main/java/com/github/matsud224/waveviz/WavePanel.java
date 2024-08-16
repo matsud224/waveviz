@@ -38,7 +38,6 @@ public class WavePanel extends JPanel implements ChangeListener {
 
         this.model = new ArrayList<>();
 
-        setPreferredSize(new Dimension(4000, 2000));
         TEXT_FONT = new Font("Courier", Font.PLAIN, FONT_HEIGHT);
     }
 
@@ -180,21 +179,26 @@ public class WavePanel extends JPanel implements ChangeListener {
         repaint();
     }
 
+    private void updateScrollBars() {
+        var maxTime = model.stream().map(s -> s.getValueChangeStore().getLastTime()).max(Comparator.naturalOrder()).orElse(0);
+        this.horizontalRangeModel.setExtent(this.getWidth() / waveUnitWidth);
+        this.horizontalRangeModel.setMaximum(maxTime);
+    }
+
     public ArrayList<Signal> getModel() {
         return model;
     }
 
     public void setModel(ArrayList<Signal> model) {
         this.model = model;
-        var maxTime = model.stream().map(s -> s.getValueChangeStore().getLastTime()).max(Comparator.naturalOrder()).orElse(0);
-        this.horizontalRangeModel.setExtent((int) Math.log(maxTime));
-        this.horizontalRangeModel.setMaximum(maxTime);
+        updateScrollBars();
         repaint();
     }
 
     public void zoomIn() {
         if (waveUnitWidth < 10000)
             waveUnitWidth = waveUnitWidth * 2;
+        updateScrollBars();
         repaint();
     }
 
@@ -202,6 +206,7 @@ public class WavePanel extends JPanel implements ChangeListener {
         waveUnitWidth = waveUnitWidth / 2;
         if (waveUnitWidth <= 0)
             waveUnitWidth = 1;
+        updateScrollBars();
         repaint();
     }
 }
