@@ -4,10 +4,12 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
+import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentListener;
 import java.util.ArrayList;
 import java.util.Comparator;
 
-public class WavePanel extends JPanel implements ChangeListener {
+public class WavePanel extends JPanel implements ChangeListener, ComponentListener {
     private static final int FONT_HEIGHT = 12;
     private static final int WAVE_Y_PADDING = 6;
     private static final int WAVE_LABEL_RIGHT_PADDING = 6;
@@ -39,6 +41,8 @@ public class WavePanel extends JPanel implements ChangeListener {
         this.model = new ArrayList<>();
 
         TEXT_FONT = new Font("Courier", Font.PLAIN, FONT_HEIGHT);
+
+        addComponentListener(this);
     }
 
     private void paintBackground(Graphics2D g2) {
@@ -51,16 +55,13 @@ public class WavePanel extends JPanel implements ChangeListener {
 
         int view_start_time = horizontalRangeModel.getValue();
 
-        int currentX = 0;
-        int currentTime = view_start_time;
-
         int upperY = currentY + WAVE_Y_PADDING;
         int lowerY = currentY + columnHeight - WAVE_Y_PADDING;
 
         int timeLabelInterval = 100;
 
-        currentTime = (currentTime + (timeLabelInterval - 1)) / timeLabelInterval * timeLabelInterval;
-        currentX = (currentTime - view_start_time) * waveUnitWidth;
+        int currentTime = (view_start_time + (timeLabelInterval - 1)) / timeLabelInterval * timeLabelInterval;
+        int currentX = (currentTime - view_start_time) * waveUnitWidth;
 
         while (currentX < g2.getClipBounds().width && currentTime < 10000) {
             int rightX = currentX + timeLabelInterval * waveUnitWidth;
@@ -183,6 +184,10 @@ public class WavePanel extends JPanel implements ChangeListener {
         var maxTime = model.stream().map(s -> s.getValueChangeStore().getLastTime()).max(Comparator.naturalOrder()).orElse(0);
         this.horizontalRangeModel.setExtent(this.getWidth() / waveUnitWidth);
         this.horizontalRangeModel.setMaximum(maxTime);
+
+        int columnHeight = FONT_HEIGHT + Y_PADDING * 2;
+        this.verticalRangeModel.setExtent(Math.min(this.getHeight() / columnHeight, model.size()));
+        this.verticalRangeModel.setMaximum(model.size());
     }
 
     public ArrayList<Signal> getModel() {
@@ -208,5 +213,26 @@ public class WavePanel extends JPanel implements ChangeListener {
             waveUnitWidth = 1;
         updateScrollBars();
         repaint();
+    }
+
+    @Override
+    public void componentResized(ComponentEvent componentEvent) {
+        updateScrollBars();
+        repaint();
+    }
+
+    @Override
+    public void componentMoved(ComponentEvent componentEvent) {
+
+    }
+
+    @Override
+    public void componentShown(ComponentEvent componentEvent) {
+
+    }
+
+    @Override
+    public void componentHidden(ComponentEvent componentEvent) {
+
     }
 }
