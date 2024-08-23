@@ -1,15 +1,13 @@
 package com.github.matsud224.waveviz;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
 import java.util.ArrayList;
 import java.util.Comparator;
 
-public class WavePanel extends JPanel implements ChangeListener, ComponentListener {
+public class WavePanel extends JPanel implements ComponentListener, Scrollable {
     private static final int FONT_HEIGHT = 12;
     private static final int WAVE_Y_PADDING = 6;
     private static final int WAVE_LABEL_RIGHT_PADDING = 6;
@@ -21,28 +19,16 @@ public class WavePanel extends JPanel implements ChangeListener, ComponentListen
     private static final int Y_PADDING = 8;
     private final Font TEXT_FONT;
 
-    private final BoundedRangeModel verticalRangeModel;
-    private final BoundedRangeModel horizontalRangeModel;
-
     private ArrayList<Signal> model;
     private int waveUnitWidth = 40;
 
-    public WavePanel(BoundedRangeModel verticalRangeModel, BoundedRangeModel horizontalRangeModel) {
-        this.verticalRangeModel = verticalRangeModel;
-        this.verticalRangeModel.addChangeListener(this);
-        this.verticalRangeModel.setExtent(1);
-        this.verticalRangeModel.setMaximum(0);
-
-        this.horizontalRangeModel = horizontalRangeModel;
-        this.horizontalRangeModel.addChangeListener(this);
-        this.horizontalRangeModel.setExtent(1);
-        this.horizontalRangeModel.setMaximum(1);
-
+    public WavePanel() {
         this.model = new ArrayList<>();
 
         TEXT_FONT = new Font("Courier", Font.PLAIN, FONT_HEIGHT);
 
         addComponentListener(this);
+        setPreferredSize(new Dimension(50 * 200, 50 * 100));
     }
 
     private void paintBackground(Graphics2D g2) {
@@ -53,7 +39,7 @@ public class WavePanel extends JPanel implements ChangeListener, ComponentListen
     private int paintTimeBar(Graphics2D g2, int currentY) {
         int columnHeight = FONT_HEIGHT + Y_PADDING * 2;
 
-        int view_start_time = horizontalRangeModel.getValue();
+        int view_start_time = g2.getClipBounds().x / waveUnitWidth;
 
         int upperY = currentY + WAVE_Y_PADDING;
         int lowerY = currentY + columnHeight - WAVE_Y_PADDING;
@@ -90,10 +76,10 @@ public class WavePanel extends JPanel implements ChangeListener, ComponentListen
         int currentY = 0;
         currentY = paintTimeBar(g2, currentY);
 
-        for (int j = verticalRangeModel.getValue(); j < model.size(); j++) {
+        for (int j = g2.getClipBounds().x / waveUnitWidth; j < model.size(); j++) {
             var signal = model.get(j);
             var store = signal.getValueChangeStore();
-            int view_start_time = horizontalRangeModel.getValue();
+            int view_start_time = g2.getClipBounds().x;
 
             int currentX = 0;
             int currentTime = view_start_time;
@@ -168,26 +154,36 @@ public class WavePanel extends JPanel implements ChangeListener, ComponentListen
         g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
                 RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
 
-        paintBackground(g2);
-        paintWaves(g2);
+        // --- test draw begin ---
+        var r = g2.getClipBounds();
+        int boxSize = 50;
+        int startBoxX = (int) r.getX() / boxSize;
+        int startBoxY = (int) r.getY() / boxSize;
+        int numBoxX = (int) r.getWidth() / boxSize + 2;
+        int numBoxY = (int) r.getHeight() / boxSize + 2;
 
-        g2.setColor(Color.RED);
-        g2.setStroke(new BasicStroke(8));
+        int count = 0;
+        for (int y = startBoxY; y < startBoxY + numBoxY; y++) {
+            for (int x = startBoxX; x < startBoxX + numBoxX; x++) {
+                g2.setColor(new Color(Math.min(y * 4, 255), Math.min(x * 4, 255), 10));
+                g2.fillRect(x * boxSize, y * boxSize, boxSize, boxSize);
+                g2.setColor(Color.black);
+                g2.drawRect(x * boxSize, y * boxSize, boxSize, boxSize);
+                count++;
+            }
+        }
+        System.out.printf("start=(%d, %d), num=(%d,%d), painted=%d\n", startBoxX, startBoxY, numBoxX, numBoxY, count);
+        // --- test draw end ---
+
+        //paintBackground(g2);
+        //paintWaves(g2);
     }
 
-    @Override
-    public void stateChanged(ChangeEvent e) {
-        repaint();
-    }
-
-    private void updateScrollBars() {
+    private void update() {
         var maxTime = model.stream().map(s -> s.getValueChangeStore().getLastTime()).max(Comparator.naturalOrder()).orElse(0);
-        this.horizontalRangeModel.setExtent(this.getWidth() / waveUnitWidth);
-        this.horizontalRangeModel.setMaximum(maxTime);
-
         int columnHeight = FONT_HEIGHT + Y_PADDING * 2;
-        this.verticalRangeModel.setExtent(Math.min(this.getHeight() / columnHeight, model.size()));
-        this.verticalRangeModel.setMaximum(model.size());
+        setPreferredSize(new Dimension(maxTime * waveUnitWidth, model.size() * columnHeight));
+        repaint();
     }
 
     public ArrayList<Signal> getModel() {
@@ -196,14 +192,14 @@ public class WavePanel extends JPanel implements ChangeListener, ComponentListen
 
     public void setModel(ArrayList<Signal> model) {
         this.model = model;
-        updateScrollBars();
+        update();
         repaint();
     }
 
     public void zoomIn() {
         if (waveUnitWidth < 10000)
             waveUnitWidth = waveUnitWidth * 2;
-        updateScrollBars();
+        update();
         repaint();
     }
 
@@ -211,13 +207,12 @@ public class WavePanel extends JPanel implements ChangeListener, ComponentListen
         waveUnitWidth = waveUnitWidth / 2;
         if (waveUnitWidth <= 0)
             waveUnitWidth = 1;
-        updateScrollBars();
+        update();
         repaint();
     }
 
     @Override
     public void componentResized(ComponentEvent componentEvent) {
-        updateScrollBars();
         repaint();
     }
 
@@ -234,5 +229,38 @@ public class WavePanel extends JPanel implements ChangeListener, ComponentListen
     @Override
     public void componentHidden(ComponentEvent componentEvent) {
 
+    }
+
+    @Override
+    public Dimension getPreferredScrollableViewportSize() {
+        return null;
+    }
+
+    @Override
+    public int getScrollableUnitIncrement(Rectangle visibleRect, int orientation, int direction) {
+        if (orientation == SwingConstants.HORIZONTAL) {
+            return 25;
+        } else {
+            return 50;
+        }
+    }
+
+    @Override
+    public int getScrollableBlockIncrement(Rectangle visibleRect, int orientation, int direction) {
+        if (orientation == SwingConstants.HORIZONTAL) {
+            return 50;
+        } else {
+            return 100;
+        }
+    }
+
+    @Override
+    public boolean getScrollableTracksViewportWidth() {
+        return false;
+    }
+
+    @Override
+    public boolean getScrollableTracksViewportHeight() {
+        return false;
     }
 }

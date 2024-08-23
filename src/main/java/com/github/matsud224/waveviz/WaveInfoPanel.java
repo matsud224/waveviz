@@ -4,9 +4,11 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
+import java.awt.event.AdjustmentEvent;
+import java.awt.event.AdjustmentListener;
 import java.util.ArrayList;
 
-public class WaveInfoPanel extends JPanel implements ChangeListener {
+public class WaveInfoPanel extends JPanel implements ChangeListener, AdjustmentListener {
     private final Color BACKGROUND_COLOR = Color.black;
     private final Color ROW_SEPARATOR_COLOR = Color.white;
     private final Color TEXT_COLOR = Color.white;
@@ -26,6 +28,8 @@ public class WaveInfoPanel extends JPanel implements ChangeListener {
         this.model = new ArrayList<>();
 
         TEXT_FONT = new Font("Arial", Font.PLAIN, FONT_HEIGHT);
+
+        setPreferredSize(new Dimension(50 * 200, 50 * 100));
     }
 
     private void paintBackground(Graphics2D g2) {
@@ -61,8 +65,11 @@ public class WaveInfoPanel extends JPanel implements ChangeListener {
                 RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
 
         paintBackground(g2);
-        paintWaveName(g2);
-        paintRowSeparator(g2);
+        //paintWaveName(g2);
+        //paintRowSeparator(g2);
+
+        g2.setColor(Color.white);
+        g2.drawString(String.format("%d", verticalRangeModel.getValue()), 10, 40);
     }
 
     @Override
@@ -77,5 +84,9 @@ public class WaveInfoPanel extends JPanel implements ChangeListener {
     public void setModel(ArrayList<Signal> model) {
         this.model = model;
         repaint();
+    }
+
+    @Override
+    public void adjustmentValueChanged(AdjustmentEvent e) {
     }
 }

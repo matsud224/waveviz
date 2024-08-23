@@ -89,43 +89,28 @@ public class RootFrame extends JFrame implements ActionListener, TreeSelectionLi
         var signalViewSplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, new JScrollPane(this.hierTree), new JScrollPane(this.signalList));
         signalViewSplitPane.setDividerLocation(300);
 
-        var waveViewVScrollBar = new JScrollBar(JScrollBar.VERTICAL, 0, 1, 0, 10);
+        wavePanel = new WavePanel();
+        var waveScrollPane = new JScrollPane(wavePanel);
+        var timeBar = new TimeBar(20, 40);
+        waveScrollPane.setColumnHeaderView(timeBar);
 
-        var waveInfoPanelHScrollBar = new JScrollBar(JScrollBar.HORIZONTAL, 0, 1, 0, 10);
-        var wavePanelHScrollBar = new JScrollBar(JScrollBar.HORIZONTAL, 0, 1, 0, 10);
+        waveInfoPanel = new WaveInfoPanel(waveScrollPane.getVerticalScrollBar().getModel());
+        var waveInfoScrollPane = new JScrollPane(waveInfoPanel);
+        waveInfoScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
+        var emptyTimeBar = new TimeBar(20, 40);
+        waveInfoScrollPane.setColumnHeaderView(emptyTimeBar);
 
-        var waveInfoPanelWithScroll = new JPanel(new BorderLayout());
-        waveInfoPanel = new WaveInfoPanel(waveViewVScrollBar.getModel());
-        waveInfoPanelWithScroll.add(waveInfoPanel, BorderLayout.CENTER);
-        waveInfoPanelWithScroll.add(waveInfoPanelHScrollBar, BorderLayout.SOUTH);
+        waveScrollPane.getVerticalScrollBar().addAdjustmentListener(waveInfoPanel);
 
-        var wavePanelWithScroll = new JPanel(new BorderLayout());
-        wavePanel = new WavePanel(waveViewVScrollBar.getModel(), wavePanelHScrollBar.getModel());
-        wavePanelWithScroll.add(wavePanel, BorderLayout.CENTER);
-        wavePanelWithScroll.add(wavePanelHScrollBar, BorderLayout.SOUTH);
-
-        waveInfoPanelHScrollBar.getModel().addChangeListener(waveInfoPanel);
-
-        var waveViewSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, waveInfoPanelWithScroll, wavePanelWithScroll);
+        var waveViewSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, waveInfoScrollPane, waveScrollPane);
         var waveViewPanel = new JPanel(new BorderLayout());
         waveViewSplitPane.setDividerLocation(200);
         waveViewSplitPane.setOneTouchExpandable(true);
         waveViewPanel.add(waveViewSplitPane, BorderLayout.CENTER);
-        waveViewPanel.add(waveViewVScrollBar, BorderLayout.EAST);
 
         var rootSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, signalViewSplitPane, waveViewPanel);
         rootSplitPane.setDividerLocation(200);
         rootSplitPane.setOneTouchExpandable(true);
-        rootSplitPane.addMouseWheelListener(e -> {
-            if (e.isControlDown()) {
-                if (e.getWheelRotation() > 0)
-                    actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "zoom-out"));
-                else if (e.getWheelRotation() < 0)
-                    actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "zoom-in"));
-            } else {
-                wavePanelHScrollBar.setValue(wavePanelHScrollBar.getValue() + e.getWheelRotation() * e.getScrollAmount());
-            }
-        });
         getContentPane().add(rootSplitPane, BorderLayout.CENTER);
 
         // Create toolbar
