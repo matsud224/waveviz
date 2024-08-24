@@ -18,8 +18,7 @@ public class RootFrame extends JFrame implements ActionListener, TreeSelectionLi
     private final LinkedHashMap<String, JMenu> menuMap;
     private final JTree hierTree;
     private final JTable signalList;
-    private final WaveInfoPanel waveInfoPanel;
-    private final WavePanel wavePanel;
+    private final WaveView waveView;
 
     RootFrame() {
         setBounds(10, 10, 900, 600);
@@ -54,12 +53,9 @@ public class RootFrame extends JFrame implements ActionListener, TreeSelectionLi
                     int selectedRow = signalList.getSelectedRow();
                     if (selectedRow != -1) {
                         Signal selectedSignal = (Signal) signalList.getModel().getValueAt(selectedRow, 1);
-                        var m = waveInfoPanel.getModel();
+                        var m = waveView.getModel();
                         m.add(selectedSignal);
-                        waveInfoPanel.setModel(m);
-                        var m2 = wavePanel.getModel();
-                        m2.add(selectedSignal);
-                        wavePanel.setModel(m2);
+                        waveView.setModel(m);
                     }
                 }
             }
@@ -89,32 +85,9 @@ public class RootFrame extends JFrame implements ActionListener, TreeSelectionLi
         var signalViewSplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, new JScrollPane(this.hierTree), new JScrollPane(this.signalList));
         signalViewSplitPane.setDividerLocation(300);
 
-        wavePanel = new WavePanel();
-        var waveScrollPane = new JScrollPane(wavePanel);
-        waveScrollPane.getViewport().setBackground(WavevizSettings.WAVE_BACKGROUND_COLOR);
-        var timeBar = new TimeBar(40);
-        waveScrollPane.setColumnHeaderView(timeBar);
+        waveView = new WaveView();
 
-        waveInfoPanel = new WaveInfoPanel();
-        var waveInfoScrollPane = new JScrollPane(waveInfoPanel);
-        waveInfoScrollPane.getViewport().setBackground(WavevizSettings.WAVE_BACKGROUND_COLOR);
-        waveInfoScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
-        var emptyTimeBar = new TimeBar(40);
-        waveInfoScrollPane.setColumnHeaderView(emptyTimeBar);
-
-        waveScrollPane.getVerticalScrollBar().addAdjustmentListener(e -> {
-            waveInfoScrollPane.getVerticalScrollBar().setValue(waveScrollPane.getVerticalScrollBar().getValue());
-            waveInfoScrollPane.revalidate();
-            waveInfoScrollPane.repaint();
-        });
-
-        var waveViewSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, waveInfoScrollPane, waveScrollPane);
-        var waveViewPanel = new JPanel(new BorderLayout());
-        waveViewSplitPane.setDividerLocation(200);
-        waveViewSplitPane.setOneTouchExpandable(true);
-        waveViewPanel.add(waveViewSplitPane, BorderLayout.CENTER);
-
-        var rootSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, signalViewSplitPane, waveViewPanel);
+        var rootSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, signalViewSplitPane, waveView);
         rootSplitPane.setDividerLocation(200);
         rootSplitPane.setOneTouchExpandable(true);
         getContentPane().add(rootSplitPane, BorderLayout.CENTER);
@@ -177,10 +150,10 @@ public class RootFrame extends JFrame implements ActionListener, TreeSelectionLi
                 JOptionPane.showMessageDialog(this, "waveviz");
                 break;
             case "zoom-in":
-                wavePanel.zoomIn();
+                waveView.zoomIn();
                 break;
             case "zoom-out":
-                wavePanel.zoomOut();
+                waveView.zoomOut();
                 break;
             default:
                 JOptionPane.showMessageDialog(this,
