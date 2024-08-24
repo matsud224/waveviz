@@ -4,18 +4,16 @@ import javax.swing.*;
 import java.awt.*;
 
 public class TimeBar extends JComponent {
-    private int height;
     private int increment;
 
-    public TimeBar(int height, int increment) {
-        this.height = height;
+    public TimeBar(int increment) {
         this.increment = increment;
 
-        setPreferredSize(new Dimension(10000, height));
+        setPreferredSize(new Dimension(10000, WavevizSettings.TIMEBAR_HEIGHT));
     }
 
     public void setPreferredWidth(int pw) {
-        setPreferredSize(new Dimension(pw, height));
+        setPreferredSize(new Dimension(pw, WavevizSettings.TIMEBAR_HEIGHT));
     }
 
     public int getIncrement() {
@@ -29,7 +27,7 @@ public class TimeBar extends JComponent {
     @Override
     protected void paintComponent(Graphics g) {
         var g2 = (Graphics2D) g;
-        g2.setFont(new Font("Arial", Font.PLAIN, 10));
+        g2.setFont(WavevizSettings.WAVE_NORMAL_FONT);
         g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
                 RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
 

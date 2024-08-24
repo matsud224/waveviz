@@ -91,16 +91,22 @@ public class RootFrame extends JFrame implements ActionListener, TreeSelectionLi
 
         wavePanel = new WavePanel();
         var waveScrollPane = new JScrollPane(wavePanel);
-        var timeBar = new TimeBar(20, 40);
+        waveScrollPane.getViewport().setBackground(WavevizSettings.WAVE_BACKGROUND_COLOR);
+        var timeBar = new TimeBar(40);
         waveScrollPane.setColumnHeaderView(timeBar);
 
-        waveInfoPanel = new WaveInfoPanel(waveScrollPane.getVerticalScrollBar().getModel());
+        waveInfoPanel = new WaveInfoPanel();
         var waveInfoScrollPane = new JScrollPane(waveInfoPanel);
+        waveInfoScrollPane.getViewport().setBackground(WavevizSettings.WAVE_BACKGROUND_COLOR);
         waveInfoScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
-        var emptyTimeBar = new TimeBar(20, 40);
+        var emptyTimeBar = new TimeBar(40);
         waveInfoScrollPane.setColumnHeaderView(emptyTimeBar);
 
-        waveScrollPane.getVerticalScrollBar().addAdjustmentListener(waveInfoPanel);
+        waveScrollPane.getVerticalScrollBar().addAdjustmentListener(e -> {
+            waveInfoScrollPane.getVerticalScrollBar().setValue(waveScrollPane.getVerticalScrollBar().getValue());
+            waveInfoScrollPane.revalidate();
+            waveInfoScrollPane.repaint();
+        });
 
         var waveViewSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, waveInfoScrollPane, waveScrollPane);
         var waveViewPanel = new JPanel(new BorderLayout());
