@@ -5,6 +5,7 @@ import java.awt.*;
 
 public class TimeBar extends JComponent {
     private int increment;
+    private int waveUnitWidth = 2;
 
     public TimeBar(int increment) {
         this.increment = increment;
@@ -33,11 +34,35 @@ public class TimeBar extends JComponent {
 
         var clipBounds = g.getClipBounds();
 
-        int start = clipBounds.x / increment * increment;
-        int end = ((clipBounds.x + clipBounds.width) / increment + 1) * increment;
+        g2.setColor(WavevizSettings.WAVE_BACKGROUND_COLOR);
+        g2.fillRect(clipBounds.x, clipBounds.y, clipBounds.width, clipBounds.height);
 
-        for (int x = start; x < end; x += increment) {
-            g.drawString(Integer.toString(x), x, 15);
+        int startTime = clipBounds.x / waveUnitWidth;
+
+        int upperY = WavevizSettings.WAVE_Y_PADDING;
+        int lowerY = WavevizSettings.TIMEBAR_HEIGHT;
+
+        int timeLabelInterval = 100;
+
+        int currentTime = (startTime + (timeLabelInterval - 1)) / timeLabelInterval * timeLabelInterval;
+        int currentX = (currentTime - startTime) * waveUnitWidth;
+
+        while (currentX < clipBounds.width && currentTime < 10000) {
+            int rightX = currentX + timeLabelInterval * waveUnitWidth;
+
+            g2.setColor(WavevizSettings.WAVE_TEXT_COLOR);
+            var metrics = g2.getFontMetrics();
+            var labelStr = WavevizUtilities.getTextWithinWidth(metrics, String.format("%d ns", currentTime), "..", rightX - currentX - WavevizSettings.WAVE_LABEL_RIGHT_PADDING * 2);
+            g2.drawString(labelStr, currentX + WavevizSettings.WAVE_LABEL_RIGHT_PADDING, WavevizSettings.WAVE_Y_PADDING + WavevizSettings.WAVE_FONT_HEIGHT);
+
+            g2.setColor(WavevizSettings.TIMEBAR_LINE_COLOR);
+            g2.drawLine(currentX, (lowerY - upperY) / 2, currentX, lowerY);
+
+            currentX = rightX;
+            currentTime += timeLabelInterval;
         }
+
+        g2.setColor(WavevizSettings.TIMEBAR_LINE_COLOR);
+        g2.drawLine(clipBounds.x, lowerY, clipBounds.x + clipBounds.width, lowerY);
     }
 }
