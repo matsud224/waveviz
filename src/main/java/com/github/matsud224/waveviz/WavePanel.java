@@ -15,112 +15,67 @@ public class WavePanel extends JPanel implements Scrollable {
 
     private void paintBackground(Graphics2D g2) {
         g2.setColor(WavevizSettings.WAVE_BACKGROUND_COLOR);
-        var r = g2.getClipBounds();
-        g2.fillRect(r.x, r.y, r.width, r.height);
-    }
-
-    private int paintTimeBar(Graphics2D g2, int currentY) {
-        int view_start_time = g2.getClipBounds().x / waveUnitWidth;
-
-        int upperY = currentY + WavevizSettings.WAVE_Y_PADDING;
-        int lowerY = currentY + WavevizSettings.WAVE_ROW_HEIGHT - WavevizSettings.WAVE_Y_PADDING;
-
-        int timeLabelInterval = 100;
-
-        int currentTime = (view_start_time + (timeLabelInterval - 1)) / timeLabelInterval * timeLabelInterval;
-        int currentX = (currentTime - view_start_time) * waveUnitWidth;
-
-        while (currentX < g2.getClipBounds().width && currentTime < 10000) {
-            int rightX = currentX + timeLabelInterval * waveUnitWidth;
-
-            g2.setColor(WavevizSettings.WAVE_TEXT_COLOR);
-            var metrics = g2.getFontMetrics();
-            var labelStr = getTextWithinWidth(metrics, String.format("%d ns", currentTime), "..", rightX - currentX - WavevizSettings.WAVE_LABEL_RIGHT_PADDING * 2);
-            g2.drawString(labelStr, currentX + WavevizSettings.WAVE_LABEL_RIGHT_PADDING, currentY + WavevizSettings.WAVE_Y_PADDING + WavevizSettings.WAVE_FONT_HEIGHT);
-
-            g2.setColor(WavevizSettings.TIMEBAR_LINE_COLOR);
-            g2.drawLine(currentX, (lowerY - upperY) / 2, currentX, lowerY);
-
-            currentX = rightX;
-            currentTime += timeLabelInterval;
-        }
-
-        g2.setColor(WavevizSettings.TIMEBAR_LINE_COLOR);
-        g2.drawLine(g2.getClipBounds().x, lowerY, g2.getClipBounds().x + g2.getClipBounds().width, lowerY);
-
-        return currentY + WavevizSettings.WAVE_ROW_HEIGHT;
+        var clipBounds = g2.getClipBounds();
+        g2.fillRect(clipBounds.x, clipBounds.y, clipBounds.width, clipBounds.height);
     }
 
     private void paintWaves(Graphics2D g2) {
-        int currentY = 0;
+        var clipBounds = g2.getClipBounds();
+        int startIndex = clipBounds.y / WavevizSettings.WAVE_ROW_HEIGHT;
+        for (int i = startIndex, y = startIndex * WavevizSettings.WAVE_ROW_HEIGHT;
+             i < model.size() && y < clipBounds.y + clipBounds.height;
+             i++, y += WavevizSettings.WAVE_ROW_HEIGHT) {
 
-        for (int j = g2.getClipBounds().x / waveUnitWidth; j < model.size(); j++) {
-            var signal = model.get(j);
+            int upperY = y + WavevizSettings.WAVE_Y_PADDING;
+            int lowerY = y + WavevizSettings.WAVE_ROW_HEIGHT - WavevizSettings.WAVE_Y_PADDING;
+
+            var signal = model.get(i);
             var store = signal.getValueChangeStore();
-            int view_start_time = g2.getClipBounds().x;
 
-            int currentX = 0;
-            int currentTime = view_start_time;
-
-            int upperY = currentY + WavevizSettings.WAVE_Y_PADDING;
-            int lowerY = currentY + WavevizSettings.WAVE_ROW_HEIGHT - WavevizSettings.WAVE_Y_PADDING;
+            int startTime = clipBounds.x / waveUnitWidth;
             String prevValue = null;
-
-            while (currentX < g2.getClipBounds().width && currentTime < store.getLastTime()) {
-                TimeRange tr = store.getValue(currentTime);
-                int rightX = currentX + waveUnitWidth * (tr.getEndTime() - currentTime + 1);
+            for (int t = startTime, x = startTime * waveUnitWidth;
+                 x < clipBounds.x + clipBounds.width; ) {
+                TimeRange tr = store.getValue(t);
+                int rightX = x + waveUnitWidth * (tr.getEndTime() - t + 1);
                 if (signal.getSize() == 1) {
                     if (tr.getValue().equals("0")) {
                         g2.setColor(WavevizSettings.WAVE_LINE_COLOR);
-                        g2.drawLine(currentX, lowerY, rightX, lowerY);
+                        g2.drawLine(x, lowerY, rightX, lowerY);
                         if (prevValue != null && prevValue.equals("1")) {
-                            g2.drawLine(currentX, upperY, currentX, lowerY);
+                            g2.drawLine(x, upperY, x, lowerY);
                         }
                     } else if (tr.getValue().equals("1")) {
                         g2.setColor(WavevizSettings.WAVE_HIGH_VALUE_FILL_COLOR);
-                        g2.fillRect(currentX, upperY, rightX - currentX, lowerY - upperY);
+                        g2.fillRect(x, upperY, rightX - x, lowerY - upperY);
                         g2.setColor(WavevizSettings.WAVE_LINE_COLOR);
-                        g2.drawLine(currentX, upperY, rightX, upperY);
+                        g2.drawLine(x, upperY, rightX, upperY);
                         if (prevValue != null && prevValue.equals("0")) {
-                            g2.drawLine(currentX, upperY, currentX, lowerY);
+                            g2.drawLine(x, upperY, x, lowerY);
                         }
                     } else {
                         if (tr.getValue().equals("x"))
                             g2.setColor(Color.red);
                         else
                             g2.setColor(Color.yellow);
-                        g2.drawLine(currentX, currentY + WavevizSettings.WAVE_ROW_HEIGHT / 2, rightX, currentY + WavevizSettings.WAVE_ROW_HEIGHT / 2);
+                        g2.drawLine(x, y + WavevizSettings.WAVE_ROW_HEIGHT / 2, rightX, y + WavevizSettings.WAVE_ROW_HEIGHT / 2);
                     }
                 } else {
                     g2.setColor(WavevizSettings.WAVE_LINE_COLOR);
-                    g2.drawLine(currentX, upperY, rightX, upperY);
+                    g2.drawLine(x, upperY, rightX, upperY);
                     g2.drawLine(rightX, upperY, rightX, lowerY);
-                    g2.drawLine(currentX, lowerY, rightX, lowerY);
+                    g2.drawLine(x, lowerY, rightX, lowerY);
 
                     g2.setColor(WavevizSettings.WAVE_TEXT_COLOR);
                     var metrics = g2.getFontMetrics();
-                    var valStr = getTextWithinWidth(metrics, tr.getValue(), "..", rightX - currentX - WavevizSettings.WAVE_LABEL_RIGHT_PADDING * 2);
-                    g2.drawString(valStr, currentX + WavevizSettings.WAVE_LABEL_RIGHT_PADDING, currentY + WavevizSettings.WAVE_Y_PADDING + WavevizSettings.WAVE_FONT_HEIGHT);
+                    var valStr = WavevizUtilities.getTextWithinWidth(metrics, tr.getValue(), "..", rightX - x - WavevizSettings.WAVE_LABEL_RIGHT_PADDING * 2);
+                    g2.drawString(valStr, x + WavevizSettings.WAVE_LABEL_RIGHT_PADDING, y + WavevizSettings.WAVE_Y_PADDING + WavevizSettings.WAVE_FONT_HEIGHT);
                 }
 
-                currentX = rightX;
-                currentTime = tr.getEndTime() + 1;
+                x = rightX;
+                t = tr.getEndTime() + 1;
                 prevValue = tr.getValue();
             }
-            currentY += WavevizSettings.WAVE_ROW_HEIGHT;
-        }
-    }
-
-    private String getTextWithinWidth(FontMetrics metrics, String text, String continuationStr, int width) {
-        if (metrics.stringWidth(text) <= width) {
-            return text;
-        } else {
-            for (int i = text.length() - 1; i >= 1; i--) {
-                String testText = text.substring(0, i) + continuationStr;
-                if (metrics.stringWidth(testText) <= width)
-                    return testText;
-            }
-            return "";
         }
     }
 
