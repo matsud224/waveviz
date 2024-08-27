@@ -2,21 +2,33 @@ package com.github.matsud224.waveviz;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Optional;
 
-public class WavePanel extends JPanel implements Scrollable {
+public class WavePanel extends JPanel implements Scrollable, MouseMotionListener, MouseListener {
     private ArrayList<Signal> model;
     private int waveUnitWidth = 40;
+    private Optional<Integer> forcusedIndex = Optional.empty();
 
     public WavePanel() {
         this.model = new ArrayList<>();
+        addMouseListener(this);
+        addMouseMotionListener(this);
     }
 
     private void paintBackground(Graphics2D g2) {
         g2.setColor(WavevizSettings.WAVE_BACKGROUND_COLOR);
         var clipBounds = g2.getClipBounds();
         g2.fillRect(clipBounds.x, clipBounds.y, clipBounds.width, clipBounds.height);
+
+        if (forcusedIndex.isPresent()) {
+            g2.setColor(WavevizSettings.WAVE_FORCUSED_BACKGROUND_COLOR);
+            g2.fillRect(0, WavevizSettings.WAVE_ROW_HEIGHT * forcusedIndex.get(), 1000, WavevizSettings.WAVE_ROW_HEIGHT);
+        }
     }
 
     private void paintWaves(Graphics2D g2) {
@@ -151,5 +163,51 @@ public class WavePanel extends JPanel implements Scrollable {
     @Override
     public boolean getScrollableTracksViewportHeight() {
         return false;
+    }
+
+    @Override
+    public void mouseDragged(MouseEvent e) {
+
+    }
+
+    @Override
+    public void mouseMoved(MouseEvent e) {
+        var index = e.getY() / WavevizSettings.WAVE_ROW_HEIGHT;
+        Optional<Integer> newForcusedIndex;
+        if (index < model.size()) {
+            newForcusedIndex = Optional.of(index);
+        } else {
+            newForcusedIndex = Optional.empty();
+        }
+        if (!forcusedIndex.equals(newForcusedIndex)) {
+            forcusedIndex = newForcusedIndex;
+            repaint();
+        }
+    }
+
+    @Override
+    public void mouseClicked(MouseEvent e) {
+
+    }
+
+    @Override
+    public void mousePressed(MouseEvent e) {
+
+    }
+
+    @Override
+    public void mouseReleased(MouseEvent e) {
+
+    }
+
+    @Override
+    public void mouseEntered(MouseEvent e) {
+
+    }
+
+    @Override
+    public void mouseExited(MouseEvent e) {
+        forcusedIndex = Optional.empty();
+        repaint();
     }
 }

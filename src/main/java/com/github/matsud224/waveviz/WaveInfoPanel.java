@@ -2,28 +2,41 @@ package com.github.matsud224.waveviz;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
 import java.util.ArrayList;
+import java.util.Optional;
 
-public class WaveInfoPanel extends JPanel implements Scrollable {
+public class WaveInfoPanel extends JPanel implements Scrollable, MouseMotionListener, MouseListener {
     private ArrayList<Signal> model;
+    private Optional<Integer> forcusedIndex = Optional.empty();
 
     public WaveInfoPanel() {
         this.model = new ArrayList<>();
+        addMouseMotionListener(this);
+        addMouseListener(this);
     }
 
     private void paintBackground(Graphics2D g2) {
         g2.setColor(WavevizSettings.WAVE_BACKGROUND_COLOR);
         var r = g2.getClipBounds();
         g2.fillRect(r.x, r.y, r.width, r.height);
+
+        if (forcusedIndex.isPresent()) {
+            g2.setColor(WavevizSettings.WAVE_FORCUSED_BACKGROUND_COLOR);
+            g2.fillRect(0, WavevizSettings.WAVE_ROW_HEIGHT * forcusedIndex.get(), 1000, WavevizSettings.WAVE_ROW_HEIGHT);
+        }
     }
 
     private void paintWaveName(Graphics2D g2) {
         int nowY = WavevizSettings.WAVE_FONT_HEIGHT + WavevizSettings.WAVE_Y_PADDING;
         g2.setColor(Color.white);
-        for (Signal signal : model) {
+        for (int i = 0; i < model.size(); i++) {
+            Signal signal = model.get(i);
             String w = signal.getName();
             g2.drawString(w, 10, nowY);
-            nowY += WavevizSettings.WAVE_FONT_HEIGHT + WavevizSettings.WAVE_Y_PADDING * 2;
+            nowY += WavevizSettings.WAVE_ROW_HEIGHT;
         }
     }
 
@@ -91,5 +104,51 @@ public class WaveInfoPanel extends JPanel implements Scrollable {
     @Override
     public boolean getScrollableTracksViewportHeight() {
         return false;
+    }
+
+    @Override
+    public void mouseDragged(MouseEvent e) {
+
+    }
+
+    @Override
+    public void mouseMoved(MouseEvent e) {
+        var index = e.getY() / WavevizSettings.WAVE_ROW_HEIGHT;
+        Optional<Integer> newForcusedIndex;
+        if (index < model.size()) {
+            newForcusedIndex = Optional.of(index);
+        } else {
+            newForcusedIndex = Optional.empty();
+        }
+        if (!forcusedIndex.equals(newForcusedIndex)) {
+            forcusedIndex = newForcusedIndex;
+            repaint();
+        }
+    }
+
+    @Override
+    public void mouseClicked(MouseEvent e) {
+
+    }
+
+    @Override
+    public void mousePressed(MouseEvent e) {
+
+    }
+
+    @Override
+    public void mouseReleased(MouseEvent e) {
+
+    }
+
+    @Override
+    public void mouseEntered(MouseEvent e) {
+
+    }
+
+    @Override
+    public void mouseExited(MouseEvent e) {
+        forcusedIndex = Optional.empty();
+        repaint();
     }
 }

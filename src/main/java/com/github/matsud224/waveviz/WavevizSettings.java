@@ -4,6 +4,7 @@ import java.awt.*;
 
 public class WavevizSettings {
     public static final Color WAVE_BACKGROUND_COLOR = Color.black;
+    public static final Color WAVE_FORCUSED_BACKGROUND_COLOR = Color.gray;
     public static final Color WAVE_ROW_SEPARATOR_COLOR = Color.white;
     public static final Color WAVE_TEXT_COLOR = Color.white;
     public static final Color WAVE_LINE_COLOR = Color.green;
