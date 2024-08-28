@@ -23,10 +23,7 @@ public class WaveView extends JPanel {
         var waveInfoScrollPane = new JScrollPane(waveInfoPanel);
         waveInfoScrollPane.getViewport().setBackground(WavevizSettings.WAVE_BACKGROUND_COLOR);
         waveInfoScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
-        var emptyTimeBar = new JLabel();
-        emptyTimeBar.setPreferredSize(new Dimension(100, WavevizSettings.WAVE_ROW_HEIGHT));
-        emptyTimeBar.setBackground(WavevizSettings.WAVE_BACKGROUND_COLOR);
-        emptyTimeBar.setOpaque(true);
+        var emptyTimeBar = new EmptyTimeBar();
         waveInfoScrollPane.setColumnHeaderView(emptyTimeBar);
 
         waveScrollPane.getVerticalScrollBar().addAdjustmentListener(e -> {
