@@ -37,6 +37,9 @@ public class WaveView extends JPanel {
         waveViewSplitPane.setOneTouchExpandable(true);
         add(waveViewSplitPane, BorderLayout.CENTER);
 
+        wavePanel.addWaveSelectionListener(waveInfoPanel);
+        waveInfoPanel.addWaveSelectionListener(wavePanel);
+
         model = new ArrayList<>();
     }
 
