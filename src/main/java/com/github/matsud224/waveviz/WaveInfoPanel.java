@@ -26,7 +26,7 @@ public class WaveInfoPanel extends JPanel implements Scrollable, MouseMotionList
 
         if (focusedIndex.isPresent()) {
             g2.setColor(WavevizSettings.WAVE_FORCUSED_BACKGROUND_COLOR);
-            g2.fillRect(0, WavevizSettings.WAVE_ROW_HEIGHT * focusedIndex.get(), 1000, WavevizSettings.WAVE_ROW_HEIGHT);
+            g2.fillRect(r.x, WavevizSettings.WAVE_ROW_HEIGHT * focusedIndex.get(), r.width, WavevizSettings.WAVE_ROW_HEIGHT);
         }
     }
 
