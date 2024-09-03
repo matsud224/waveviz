@@ -4,7 +4,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 
-public class WaveView extends JPanel {
+public class WaveView extends JPanel implements WaveStatusListener {
     private final WavePanel wavePanel;
     private final WaveInfoPanel waveInfoPanel;
     private final TimeBar timeBar;
@@ -14,12 +14,14 @@ public class WaveView extends JPanel {
         super(new BorderLayout());
 
         wavePanel = new WavePanel();
+        wavePanel.addWaveStatusListener(this);
         var waveScrollPane = new JScrollPane(wavePanel);
         waveScrollPane.getViewport().setBackground(WavevizSettings.WAVE_BACKGROUND_COLOR);
         timeBar = new TimeBar(40);
         waveScrollPane.setColumnHeaderView(timeBar);
 
         waveInfoPanel = new WaveInfoPanel();
+        waveInfoPanel.addWaveStatusListener(this);
         var waveInfoScrollPane = new JScrollPane(waveInfoPanel);
         waveInfoScrollPane.getViewport().setBackground(WavevizSettings.WAVE_BACKGROUND_COLOR);
         waveInfoScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
@@ -59,5 +61,11 @@ public class WaveView extends JPanel {
 
     public void zoomOut() {
         wavePanel.zoomOut();
+    }
+
+    @Override
+    public void waveRemoved(int index) {
+        model.remove(index);
+        setModel(model);
     }
 }

@@ -2,23 +2,34 @@ package com.github.matsud224.waveviz;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.event.MouseMotionListener;
+import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Optional;
 
-public class WavePanel extends JPanel implements Scrollable, MouseMotionListener, MouseListener, WaveSelectionListener {
+public class WavePanel extends JPanel implements Scrollable, MouseMotionListener, MouseListener, WaveSelectionListener, ActionListener {
     private ArrayList<Signal> model;
     private int waveUnitWidth = 40;
     private Optional<Integer> focusedIndex = Optional.empty();
     private ArrayList<WaveSelectionListener> waveSelectionListeners = new ArrayList<>();
+    private ArrayList<WaveStatusListener> waveStatusListeners = new ArrayList<>();
+    private JPopupMenu popupMenu;
+    private Point popupPosition;
 
     public WavePanel() {
         this.model = new ArrayList<>();
         addMouseListener(this);
         addMouseMotionListener(this);
+
+        // Create Popup Menu
+        popupMenu = new JPopupMenu();
+        var removeMenuItem = new JMenuItem("Remove");
+        removeMenuItem.setActionCommand("remove-wave");
+        removeMenuItem.addActionListener(this);
+        popupMenu.add(removeMenuItem);
+
+        MouseListener popupListener = new PopupListener();
+        addMouseListener(popupListener);
     }
 
     private void paintBackground(Graphics2D g2) {
@@ -222,5 +233,35 @@ public class WavePanel extends JPanel implements Scrollable, MouseMotionListener
 
     public void addWaveSelectionListener(WaveSelectionListener listener) {
         waveSelectionListeners.add(listener);
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        if (e.getActionCommand() == "remove-wave") {
+            waveStatusListeners.forEach(listener -> listener.waveRemoved((int) popupPosition.getY() / WavevizSettings.WAVE_ROW_HEIGHT));
+        }
+    }
+
+    public void addWaveStatusListener(WaveStatusListener listener) {
+        waveStatusListeners.add(listener);
+    }
+
+    private class PopupListener extends MouseAdapter {
+        @Override
+        public void mousePressed(MouseEvent e) {
+            showPopup(e);
+        }
+
+        @Override
+        public void mouseReleased(MouseEvent e) {
+            showPopup(e);
+        }
+
+        private void showPopup(MouseEvent e) {
+            if (e.isPopupTrigger()) {
+                popupPosition = e.getPoint();
+                popupMenu.show(e.getComponent(), e.getX(), e.getY());
+            }
+        }
     }
 }
