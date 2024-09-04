@@ -15,6 +15,8 @@ public class WavePanel extends JPanel implements Scrollable, MouseMotionListener
     private ArrayList<WaveStatusListener> waveStatusListeners = new ArrayList<>();
     private JPopupMenu popupMenu;
     private Point popupPosition;
+    private JMenuItem moveUpMenuItem;
+    private JMenuItem moveDownMenuItem;
 
     public WavePanel() {
         this.model = new ArrayList<>();
@@ -24,7 +26,7 @@ public class WavePanel extends JPanel implements Scrollable, MouseMotionListener
         // Create Popup Menu
         popupMenu = new JPopupMenu();
         var removeMenuItem = new JMenuItem("Remove");
-        removeMenuItem.setActionCommand("remove-wave");
+        removeMenuItem.setActionCommand("wave-remove");
         removeMenuItem.addActionListener(this);
         popupMenu.add(removeMenuItem);
 
@@ -237,7 +239,7 @@ public class WavePanel extends JPanel implements Scrollable, MouseMotionListener
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        if (e.getActionCommand() == "remove-wave") {
+        if (e.getActionCommand() == "wave-remove") {
             waveStatusListeners.forEach(listener -> listener.waveRemoved((int) popupPosition.getY() / WavevizSettings.WAVE_ROW_HEIGHT));
         }
     }
@@ -260,6 +262,9 @@ public class WavePanel extends JPanel implements Scrollable, MouseMotionListener
         private void showPopup(MouseEvent e) {
             if (e.isPopupTrigger()) {
                 popupPosition = e.getPoint();
+                var target = (int) popupPosition.getY() / WavevizSettings.WAVE_ROW_HEIGHT;
+                moveUpMenuItem.setEnabled(target != 0);
+                moveDownMenuItem.setEnabled(target != model.size() - 1);
                 popupMenu.show(e.getComponent(), e.getX(), e.getY());
             }
         }

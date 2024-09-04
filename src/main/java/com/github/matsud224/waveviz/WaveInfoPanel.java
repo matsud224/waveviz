@@ -13,6 +13,8 @@ public class WaveInfoPanel extends JPanel implements Scrollable, MouseMotionList
     private ArrayList<WaveStatusListener> waveStatusListeners = new ArrayList<>();
     private JPopupMenu popupMenu;
     private Point popupPosition;
+    private Optional<Integer> dragTargetIndex = Optional.empty();
+    private int dragToIndex;
 
     public WaveInfoPanel() {
         this.model = new ArrayList<>();
@@ -58,6 +60,20 @@ public class WaveInfoPanel extends JPanel implements Scrollable, MouseMotionList
         for (int i = 0; i < model.size(); i++) {
             g2.drawLine(0, nowY, 1000, nowY);
             nowY += WavevizSettings.WAVE_FONT_HEIGHT + WavevizSettings.WAVE_Y_PADDING * 2;
+        }
+
+        if (dragTargetIndex.isPresent()) {
+            // Dragging
+            g2.setColor(Color.red);
+            g2.setStroke(new BasicStroke(4));
+            if (dragTargetIndex.get() < dragToIndex) {
+                int lineY = WavevizSettings.WAVE_ROW_HEIGHT * (dragToIndex + 1);
+                g2.drawLine(0, lineY, 1000, lineY);
+            } else if (dragTargetIndex.get() > dragToIndex) {
+                int lineY = WavevizSettings.WAVE_ROW_HEIGHT * dragToIndex;
+                g2.drawLine(0, lineY, 1000, lineY);
+            }
+            g2.setStroke(new BasicStroke(1));
         }
     }
 
@@ -120,7 +136,21 @@ public class WaveInfoPanel extends JPanel implements Scrollable, MouseMotionList
 
     @Override
     public void mouseDragged(MouseEvent e) {
+        var rect = new Rectangle(e.getX(), e.getY(), 1, 1);
+        scrollRectToVisible(rect);
+        if (dragTargetIndex.isEmpty()) {
+            dragTargetIndex = Optional.of(e.getY() / WavevizSettings.WAVE_ROW_HEIGHT);
+        }
+        dragToIndex = Math.min(Math.max(e.getY() / WavevizSettings.WAVE_ROW_HEIGHT, 0), model.size() - 1);
+        repaint();
+    }
 
+    @Override
+    public void mouseReleased(MouseEvent e) {
+        if (dragTargetIndex.isPresent()) {
+            waveStatusListeners.forEach(listener -> listener.waveReordered(dragTargetIndex.get(), dragToIndex));
+            dragTargetIndex = Optional.empty();
+        }
     }
 
     @Override
@@ -146,11 +176,6 @@ public class WaveInfoPanel extends JPanel implements Scrollable, MouseMotionList
 
     @Override
     public void mousePressed(MouseEvent e) {
-
-    }
-
-    @Override
-    public void mouseReleased(MouseEvent e) {
 
     }
 

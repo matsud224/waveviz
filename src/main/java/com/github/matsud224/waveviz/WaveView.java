@@ -34,6 +34,12 @@ public class WaveView extends JPanel implements WaveStatusListener {
             waveInfoScrollPane.repaint();
         });
 
+        waveInfoScrollPane.getVerticalScrollBar().addAdjustmentListener(e -> {
+            waveScrollPane.getVerticalScrollBar().setValue(waveInfoScrollPane.getVerticalScrollBar().getValue());
+            waveScrollPane.revalidate();
+            waveScrollPane.repaint();
+        });
+
         var waveViewSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, waveInfoScrollPane, waveScrollPane);
         waveViewSplitPane.setDividerLocation(200);
         waveViewSplitPane.setOneTouchExpandable(true);
@@ -66,6 +72,17 @@ public class WaveView extends JPanel implements WaveStatusListener {
     @Override
     public void waveRemoved(int index) {
         model.remove(index);
+        setModel(model);
+    }
+
+    @Override
+    public void waveReordered(int targetIndex, int toIndex) {
+        if (targetIndex < 0 || targetIndex >= model.size())
+            return;
+
+        var target = model.get(targetIndex);
+        model.remove(targetIndex);
+        model.add(toIndex, target);
         setModel(model);
     }
 }
