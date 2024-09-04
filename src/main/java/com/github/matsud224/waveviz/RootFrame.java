@@ -54,7 +54,7 @@ public class RootFrame extends JFrame implements ActionListener, TreeSelectionLi
                     if (selectedRow != -1) {
                         Signal selectedSignal = (Signal) signalList.getModel().getValueAt(selectedRow, 1);
                         var m = waveView.getModel();
-                        m.add(selectedSignal);
+                        m.add(new Waveform(selectedSignal));
                         waveView.setModel(m);
                     }
                 }

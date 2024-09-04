@@ -88,4 +88,14 @@ public class HierarchyTree implements TreeModel {
     public void removeTreeModelListener(TreeModelListener treeModelListener) {
 
     }
+
+    public ArrayList<String> getPath() {
+        ArrayList<String> path = new ArrayList<>();
+        HierarchyTree t = this;
+        while (t != null) {
+            path.add(0, t.getScopeName());
+            t = t.parent;
+        }
+        return path;
+    }
 }

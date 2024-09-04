@@ -121,7 +121,9 @@ public final class VCDParser {
                         storeMap.put(identifier, store);
                     }
 
-                    var signal = new Signal(reference, varType.toString(), size, store);
+                    var path = currentScope.getPath();
+                    path.add(reference);
+                    var signal = new Signal(path, varType.toString(), size, store);
                     currentScope.signals.add(signal);
                     break;
                 case VERSION:

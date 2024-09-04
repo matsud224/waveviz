@@ -8,7 +8,7 @@ public class WaveView extends JPanel implements WaveStatusListener {
     private final WavePanel wavePanel;
     private final WaveInfoPanel waveInfoPanel;
     private final TimeBar timeBar;
-    private ArrayList<Signal> model;
+    private ArrayList<Waveform> model;
 
     public WaveView() {
         super(new BorderLayout());
@@ -51,11 +51,11 @@ public class WaveView extends JPanel implements WaveStatusListener {
         model = new ArrayList<>();
     }
 
-    public ArrayList<Signal> getModel() {
+    public ArrayList<Waveform> getModel() {
         return model;
     }
 
-    public void setModel(ArrayList<Signal> model) {
+    public void setModel(ArrayList<Waveform> model) {
         this.model = model;
         wavePanel.setModel(model);
         waveInfoPanel.setModel(model);

@@ -8,7 +8,7 @@ import java.util.Comparator;
 import java.util.Optional;
 
 public class WavePanel extends JPanel implements Scrollable, MouseMotionListener, MouseListener, WaveSelectionListener, ActionListener {
-    private ArrayList<Signal> model;
+    private ArrayList<Waveform> model;
     private int waveUnitWidth = 40;
     private Optional<Integer> focusedIndex = Optional.empty();
     private ArrayList<WaveSelectionListener> waveSelectionListeners = new ArrayList<>();
@@ -53,7 +53,7 @@ public class WavePanel extends JPanel implements Scrollable, MouseMotionListener
             int upperY = y + WavevizSettings.WAVE_Y_PADDING;
             int lowerY = y + WavevizSettings.WAVE_ROW_HEIGHT - WavevizSettings.WAVE_Y_PADDING;
 
-            var signal = model.get(i);
+            var signal = model.get(i).getSignal();
             var store = signal.getValueChangeStore();
 
             int startTime = clipBounds.x / waveUnitWidth;
@@ -116,17 +116,17 @@ public class WavePanel extends JPanel implements Scrollable, MouseMotionListener
     }
 
     private void update() {
-        var maxTime = model.stream().map(s -> s.getValueChangeStore().getLastTime()).max(Comparator.naturalOrder()).orElse(0);
+        var maxTime = model.stream().map(wf -> wf.getSignal().getValueChangeStore().getLastTime()).max(Comparator.naturalOrder()).orElse(0);
         setPreferredSize(new Dimension(maxTime * waveUnitWidth, WavevizSettings.WAVE_ROW_HEIGHT * model.size()));
         revalidate();
         repaint();
     }
 
-    public ArrayList<Signal> getModel() {
+    public ArrayList<Waveform> getModel() {
         return model;
     }
 
-    public void setModel(ArrayList<Signal> model) {
+    public void setModel(ArrayList<Waveform> model) {
         this.model = model;
         update();
     }

@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.Optional;
 
 public class WaveInfoPanel extends JPanel implements Scrollable, MouseMotionListener, MouseListener, WaveSelectionListener, ActionListener {
-    private ArrayList<Signal> model;
+    private ArrayList<Waveform> model;
     private Optional<Integer> focusedIndex = Optional.empty();
     private ArrayList<WaveSelectionListener> waveSelectionListeners = new ArrayList<>();
     private ArrayList<WaveStatusListener> waveStatusListeners = new ArrayList<>();
@@ -47,8 +47,8 @@ public class WaveInfoPanel extends JPanel implements Scrollable, MouseMotionList
         int nowY = WavevizSettings.WAVE_FONT_HEIGHT + WavevizSettings.WAVE_Y_PADDING;
         g2.setColor(Color.white);
         for (int i = 0; i < model.size(); i++) {
-            Signal signal = model.get(i);
-            String w = signal.getName();
+            Signal signal = model.get(i).getSignal();
+            String w = String.join(".", signal.getPath());
             g2.drawString(w, 10, nowY);
             nowY += WavevizSettings.WAVE_ROW_HEIGHT;
         }
@@ -90,11 +90,11 @@ public class WaveInfoPanel extends JPanel implements Scrollable, MouseMotionList
         paintRowSeparator(g2);
     }
 
-    public ArrayList<Signal> getModel() {
+    public ArrayList<Waveform> getModel() {
         return model;
     }
 
-    public void setModel(ArrayList<Signal> model) {
+    public void setModel(ArrayList<Waveform> model) {
         this.model = model;
         setPreferredSize(new Dimension(1000, WavevizSettings.WAVE_ROW_HEIGHT * model.size()));
         revalidate();
