@@ -15,8 +15,6 @@ public class WavePanel extends JPanel implements Scrollable, MouseMotionListener
     private ArrayList<WaveStatusListener> waveStatusListeners = new ArrayList<>();
     private JPopupMenu popupMenu;
     private Point popupPosition;
-    private JMenuItem moveUpMenuItem;
-    private JMenuItem moveDownMenuItem;
 
     public WavePanel() {
         this.model = new ArrayList<>();
@@ -263,8 +261,6 @@ public class WavePanel extends JPanel implements Scrollable, MouseMotionListener
             if (e.isPopupTrigger()) {
                 popupPosition = e.getPoint();
                 var target = (int) popupPosition.getY() / WavevizSettings.WAVE_ROW_HEIGHT;
-                moveUpMenuItem.setEnabled(target != 0);
-                moveDownMenuItem.setEnabled(target != model.size() - 1);
                 popupMenu.show(e.getComponent(), e.getX(), e.getY());
             }
         }
