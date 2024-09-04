@@ -85,4 +85,10 @@ public class WaveView extends JPanel implements WaveStatusListener {
         model.add(toIndex, target);
         setModel(model);
     }
+
+    @Override
+    public void waveStatusChanged(int index) {
+        wavePanel.repaint();
+        waveInfoPanel.repaint();
+    }
 }

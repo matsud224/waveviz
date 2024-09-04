@@ -12,6 +12,7 @@ public class WaveInfoPanel extends JPanel implements Scrollable, MouseMotionList
     private ArrayList<WaveSelectionListener> waveSelectionListeners = new ArrayList<>();
     private ArrayList<WaveStatusListener> waveStatusListeners = new ArrayList<>();
     private JPopupMenu popupMenu;
+    private JCheckBoxMenuItem showFullPathMenuItem;
     private Point popupPosition;
     private Optional<Integer> dragTargetIndex = Optional.empty();
     private int dragToIndex;
@@ -23,10 +24,16 @@ public class WaveInfoPanel extends JPanel implements Scrollable, MouseMotionList
 
         // Create Popup Menu
         popupMenu = new JPopupMenu();
+
         var removeMenuItem = new JMenuItem("Remove");
-        removeMenuItem.setActionCommand("remove-wave");
+        removeMenuItem.setActionCommand("wave-remove");
         removeMenuItem.addActionListener(this);
         popupMenu.add(removeMenuItem);
+
+        showFullPathMenuItem = new JCheckBoxMenuItem("Show Full Path");
+        showFullPathMenuItem.setActionCommand("wave-show-full-path");
+        showFullPathMenuItem.addActionListener(this);
+        popupMenu.add(showFullPathMenuItem);
 
         MouseListener popupListener = new PopupListener();
         addMouseListener(popupListener);
@@ -47,8 +54,10 @@ public class WaveInfoPanel extends JPanel implements Scrollable, MouseMotionList
         int nowY = WavevizSettings.WAVE_FONT_HEIGHT + WavevizSettings.WAVE_Y_PADDING;
         g2.setColor(Color.white);
         for (int i = 0; i < model.size(); i++) {
-            Signal signal = model.get(i).getSignal();
-            String w = String.join(".", signal.getPath());
+            Waveform wf = model.get(i);
+            Signal signal = wf.getSignal();
+            ArrayList<String> path = signal.getPath();
+            String w = wf.getName();
             g2.drawString(w, 10, nowY);
             nowY += WavevizSettings.WAVE_ROW_HEIGHT;
         }
@@ -203,8 +212,12 @@ public class WaveInfoPanel extends JPanel implements Scrollable, MouseMotionList
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        if (e.getActionCommand() == "remove-wave") {
-            waveStatusListeners.forEach(listener -> listener.waveRemoved((int) popupPosition.getY() / WavevizSettings.WAVE_ROW_HEIGHT));
+        int index = (int) popupPosition.getY() / WavevizSettings.WAVE_ROW_HEIGHT;
+        if (e.getActionCommand() == "wave-remove") {
+            waveStatusListeners.forEach(listener -> listener.waveRemoved(index));
+        } else if (e.getActionCommand() == "wave-show-full-path") {
+            model.get(index).setIsShowFullPath(!model.get(index).getIsShowFullPath());
+            waveStatusListeners.forEach(listener -> listener.waveStatusChanged(index));
         }
     }
 
@@ -225,6 +238,8 @@ public class WaveInfoPanel extends JPanel implements Scrollable, MouseMotionList
 
         private void showPopup(MouseEvent e) {
             if (e.isPopupTrigger()) {
+                int index = e.getY() / WavevizSettings.WAVE_ROW_HEIGHT;
+                showFullPathMenuItem.setSelected(model.get(index).getIsShowFullPath());
                 popupPosition = e.getPoint();
                 popupMenu.show(e.getComponent(), e.getX(), e.getY());
             }
