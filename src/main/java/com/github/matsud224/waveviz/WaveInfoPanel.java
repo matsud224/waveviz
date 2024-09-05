@@ -9,6 +9,7 @@ import java.util.Optional;
 public class WaveInfoPanel extends JPanel implements Scrollable, MouseMotionListener, MouseListener, WaveSelectionListener, ActionListener {
     private ArrayList<Waveform> model;
     private Optional<Integer> focusedIndex = Optional.empty();
+    private Optional<Integer> selectedIndex = Optional.empty();
     private ArrayList<WaveSelectionListener> waveSelectionListeners = new ArrayList<>();
     private ArrayList<WaveStatusListener> waveStatusListeners = new ArrayList<>();
     private JPopupMenu popupMenu;
@@ -45,8 +46,13 @@ public class WaveInfoPanel extends JPanel implements Scrollable, MouseMotionList
         g2.fillRect(r.x, r.y, r.width, r.height);
 
         if (focusedIndex.isPresent()) {
-            g2.setColor(WavevizSettings.WAVE_FORCUSED_BACKGROUND_COLOR);
+            g2.setColor(WavevizSettings.WAVE_FOCUSED_BACKGROUND_COLOR);
             g2.fillRect(r.x, WavevizSettings.WAVE_ROW_HEIGHT * focusedIndex.get(), r.width, WavevizSettings.WAVE_ROW_HEIGHT);
+        }
+        if (selectedIndex.isPresent()) {
+            int index = selectedIndex.get();
+            g2.setColor(WavevizSettings.WAVE_SELECTED_BACKGROUND_COLOR);
+            g2.fillRect(r.x, WavevizSettings.WAVE_ROW_HEIGHT * index, r.width, WavevizSettings.WAVE_ROW_HEIGHT);
         }
     }
 
@@ -105,6 +111,7 @@ public class WaveInfoPanel extends JPanel implements Scrollable, MouseMotionList
 
     public void setModel(ArrayList<Waveform> model) {
         this.model = model;
+        selectedIndex = Optional.empty();
         setPreferredSize(new Dimension(1000, WavevizSettings.WAVE_ROW_HEIGHT * model.size()));
         revalidate();
         repaint();
@@ -180,7 +187,18 @@ public class WaveInfoPanel extends JPanel implements Scrollable, MouseMotionList
 
     @Override
     public void mouseClicked(MouseEvent e) {
-
+        var index = e.getY() / WavevizSettings.WAVE_ROW_HEIGHT;
+        Optional<Integer> newSelectedIndex;
+        if (index < model.size()) {
+            newSelectedIndex = Optional.of(index);
+        } else {
+            newSelectedIndex = Optional.empty();
+        }
+        if (!selectedIndex.equals(newSelectedIndex)) {
+            waveSelectionListeners.forEach(listener -> listener.waveSelectionChanged(newSelectedIndex));
+            selectedIndex = newSelectedIndex;
+            repaint();
+        }
     }
 
     @Override
@@ -203,6 +221,12 @@ public class WaveInfoPanel extends JPanel implements Scrollable, MouseMotionList
     @Override
     public void waveFocusChanged(Optional<Integer> index) {
         focusedIndex = index;
+        repaint();
+    }
+
+    @Override
+    public void waveSelectionChanged(Optional<Integer> index) {
+        selectedIndex = index;
         repaint();
     }
 

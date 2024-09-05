@@ -4,4 +4,6 @@ import java.util.Optional;
 
 public interface WaveSelectionListener {
     void waveFocusChanged(Optional<Integer> index);
+
+    void waveSelectionChanged(Optional<Integer> index);
 }

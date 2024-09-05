@@ -2,7 +2,10 @@ package com.github.matsud224.waveviz;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.util.ArrayList;
+import java.util.Optional;
 
 public class WaveView extends JPanel implements WaveStatusListener {
     private final WavePanel wavePanel;
@@ -17,6 +20,35 @@ public class WaveView extends JPanel implements WaveStatusListener {
         wavePanel.addWaveStatusListener(this);
         var waveScrollPane = new JScrollPane(wavePanel);
         waveScrollPane.getViewport().setBackground(WavevizSettings.WAVE_BACKGROUND_COLOR);
+        waveScrollPane.addMouseListener(new MouseListener() {
+            @Override
+            public void mouseClicked(MouseEvent mouseEvent) {
+                wavePanel.waveSelectionChanged(Optional.empty());
+                waveInfoPanel.waveSelectionChanged(Optional.empty());
+                wavePanel.repaint();
+                waveInfoPanel.repaint();
+            }
+
+            @Override
+            public void mousePressed(MouseEvent mouseEvent) {
+
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent mouseEvent) {
+
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent mouseEvent) {
+
+            }
+
+            @Override
+            public void mouseExited(MouseEvent mouseEvent) {
+
+            }
+        });
         timeBar = new TimeBar(40);
         waveScrollPane.setColumnHeaderView(timeBar);
 
@@ -25,6 +57,35 @@ public class WaveView extends JPanel implements WaveStatusListener {
         var waveInfoScrollPane = new JScrollPane(waveInfoPanel);
         waveInfoScrollPane.getViewport().setBackground(WavevizSettings.WAVE_BACKGROUND_COLOR);
         waveInfoScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
+        waveInfoScrollPane.addMouseListener(new MouseListener() {
+            @Override
+            public void mouseClicked(MouseEvent mouseEvent) {
+                wavePanel.waveSelectionChanged(Optional.empty());
+                waveInfoPanel.waveSelectionChanged(Optional.empty());
+                wavePanel.repaint();
+                waveInfoPanel.repaint();
+            }
+
+            @Override
+            public void mousePressed(MouseEvent mouseEvent) {
+
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent mouseEvent) {
+
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent mouseEvent) {
+
+            }
+
+            @Override
+            public void mouseExited(MouseEvent mouseEvent) {
+
+            }
+        });
         var emptyTimeBar = new EmptyTimeBar();
         waveInfoScrollPane.setColumnHeaderView(emptyTimeBar);
 
