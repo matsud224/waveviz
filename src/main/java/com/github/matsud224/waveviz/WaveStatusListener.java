@@ -1,6 +1,8 @@
 package com.github.matsud224.waveviz;
 
-public interface WaveStatusListener {
+import java.util.EventListener;
+
+public interface WaveStatusListener extends EventListener {
     void waveRemoved(int index);
 
     void waveReordered(int targetIndex, int toIndex);
