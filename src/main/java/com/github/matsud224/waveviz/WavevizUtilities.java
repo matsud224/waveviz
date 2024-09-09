@@ -1,6 +1,7 @@
 package com.github.matsud224.waveviz;
 
 import java.awt.*;
+import java.util.Optional;
 
 public class WavevizUtilities {
     public static String getTextWithinWidth(FontMetrics metrics, String text, String continuationStr, int width) {
@@ -33,5 +34,21 @@ public class WavevizUtilities {
             substrLen = 4;
         }
         return hexStrBuilder.toString();
+    }
+
+    static final Optional<Integer> safeMultiply(int left, int right) throws ArithmeticException {
+        if (right > 0 ? left > Integer.MAX_VALUE / right || left < Integer.MIN_VALUE / right :
+                (right < -1 ? left > Integer.MIN_VALUE / right || left < Integer.MAX_VALUE / right :
+                        right == -1 && left == Integer.MIN_VALUE)) {
+            return Optional.empty();
+        }
+        return Optional.of(left * right);
+    }
+
+    static final Optional<Integer> safeDivide(int left, int right) throws ArithmeticException {
+        if ((left == Integer.MIN_VALUE) && (right == -1)) {
+            return Optional.empty();
+        }
+        return Optional.of(left / right);
     }
 }

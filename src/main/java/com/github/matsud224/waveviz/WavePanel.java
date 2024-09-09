@@ -70,15 +70,31 @@ public class WavePanel extends JPanel implements Scrollable, MouseMotionListener
         if (pixelsPerUnitTime > 0) {
             return x / pixelsPerUnitTime;
         } else {
-            return x * (-pixelsPerUnitTime);
+            return WavevizUtilities.safeMultiply(x, -pixelsPerUnitTime).orElse(Integer.MAX_VALUE);
         }
     }
 
     private int xCoordinateFromTime(int t) {
         if (pixelsPerUnitTime > 0) {
-            return t * pixelsPerUnitTime;
+            return WavevizUtilities.safeMultiply(t, pixelsPerUnitTime).orElse(Integer.MAX_VALUE);
         } else {
             return t / (-pixelsPerUnitTime);
+        }
+    }
+
+    private Optional<Integer> safeTimeFromXCoordinate(int x) {
+        if (pixelsPerUnitTime > 0) {
+            return Optional.of(x / pixelsPerUnitTime);
+        } else {
+            return WavevizUtilities.safeMultiply(x, -pixelsPerUnitTime);
+        }
+    }
+
+    private Optional<Integer> safeXCoordinateFromTime(int t) {
+        if (pixelsPerUnitTime > 0) {
+            return WavevizUtilities.safeMultiply(t, pixelsPerUnitTime);
+        } else {
+            return Optional.of(t / -pixelsPerUnitTime);
         }
     }
 
@@ -97,7 +113,7 @@ public class WavePanel extends JPanel implements Scrollable, MouseMotionListener
             var store = signal.getValueChangeStore();
 
             int startTime = timeFromXCoordinate(clipBounds.x);
-            int maxTime = model.stream().map(w -> w.getSignal().getValueChangeStore().getLastTime()).max(Comparator.naturalOrder()).orElse(0);
+            int maxTime = getMaxTime();
             String prevValue = null;
             for (int t = startTime, x = xCoordinateFromTime(startTime);
                  x < clipBounds.x + clipBounds.width && t <= maxTime; ) {
@@ -159,6 +175,10 @@ public class WavePanel extends JPanel implements Scrollable, MouseMotionListener
         }
     }
 
+    private int getMaxTime() {
+        return model.stream().map(wf -> wf.getSignal().getValueChangeStore().getLastTime()).max(Comparator.naturalOrder()).orElse(0);
+    }
+
     @Override
     protected void paintComponent(Graphics g) {
         Graphics2D g2 = (Graphics2D) g;
@@ -172,8 +192,8 @@ public class WavePanel extends JPanel implements Scrollable, MouseMotionListener
     }
 
     private void update() {
-        var maxTime = model.stream().map(wf -> wf.getSignal().getValueChangeStore().getLastTime()).max(Comparator.naturalOrder()).orElse(0);
-        setPreferredSize(new Dimension(xCoordinateFromTime(maxTime), WavevizSettings.WAVE_ROW_HEIGHT * model.size()));
+        var maxTime = getMaxTime();
+        setPreferredSize(new Dimension(safeXCoordinateFromTime(maxTime).orElse(Integer.MAX_VALUE), WavevizSettings.WAVE_ROW_HEIGHT * model.size()));
         revalidate();
         repaint();
     }
@@ -185,27 +205,43 @@ public class WavePanel extends JPanel implements Scrollable, MouseMotionListener
     public void setModel(ArrayList<Waveform> model) {
         this.model = model;
         selectedIndex = Optional.empty();
+
+        while (safeXCoordinateFromTime(getMaxTime()).isEmpty()) {
+            if (!zoomOut()) {
+                JOptionPane.showMessageDialog(this,
+                        "Waveform is too large to display.", "Error", JOptionPane.ERROR_MESSAGE);
+                break;
+            }
+        }
+
         update();
     }
 
-    public void zoomIn() {
+    public boolean zoomIn() {
+        boolean result = true;
         if (pixelsPerUnitTime < 0) {
             if (pixelsPerUnitTime == -1)
                 pixelsPerUnitTime = 1;
             else
                 pixelsPerUnitTime /= 2;
         } else if (pixelsPerUnitTime > 0) {
-            pixelsPerUnitTime = Math.min(WavevizSettings.WAVE_MAX_PIXELS_PER_UNIT_TIME, pixelsPerUnitTime * 2);
+            if (pixelsPerUnitTime * 2 <= WavevizSettings.WAVE_MAX_PIXELS_PER_UNIT_TIME)
+                pixelsPerUnitTime *= 2;
+            else
+                result = false;
         }
         update();
+        return result;
     }
 
-    public void zoomOut() {
+    public boolean zoomOut() {
+        boolean result = true;
         if (pixelsPerUnitTime < 0) {
-            var maxTime = model.stream().map(wf -> wf.getSignal().getValueChangeStore().getLastTime()).max(Comparator.naturalOrder()).orElse(0);
-            System.out.printf("width = %d\n", xCoordinateFromTime(maxTime));
+            var maxTime = getMaxTime();
             if (xCoordinateFromTime(maxTime) > WavevizSettings.WAVE_MIN_WHOLE_WIDTH)
                 pixelsPerUnitTime *= 2;
+            else
+                result = false;
         } else if (pixelsPerUnitTime > 0) {
             if (pixelsPerUnitTime == 1)
                 pixelsPerUnitTime = -1;
@@ -213,6 +249,7 @@ public class WavePanel extends JPanel implements Scrollable, MouseMotionListener
                 pixelsPerUnitTime /= 2;
         }
         update();
+        return result;
     }
 
     @Override
