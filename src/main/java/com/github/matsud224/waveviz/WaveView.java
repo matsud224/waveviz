@@ -20,6 +20,7 @@ public class WaveView extends JPanel implements WaveStatusListener {
         wavePanel.addWaveStatusListener(this);
         var waveScrollPane = new JScrollPane(wavePanel);
         waveScrollPane.getViewport().setBackground(WavevizSettings.WAVE_BACKGROUND_COLOR);
+        waveScrollPane.getViewport().setScrollMode(JViewport.SIMPLE_SCROLL_MODE);
         waveScrollPane.addMouseListener(new MouseListener() {
             @Override
             public void mouseClicked(MouseEvent mouseEvent) {
