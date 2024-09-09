@@ -108,6 +108,7 @@ public class WaveView extends JPanel implements WaveStatusListener {
         add(waveViewSplitPane, BorderLayout.CENTER);
 
         wavePanel.addWaveSelectionListener(waveInfoPanel);
+        wavePanel.addScaleChangeListener(timeBar);
         waveInfoPanel.addWaveSelectionListener(wavePanel);
 
         model = new ArrayList<>();

@@ -15,6 +15,7 @@ public class WavePanel extends JPanel implements Scrollable, MouseMotionListener
     private Optional<Integer> selectedIndex = Optional.empty();
     private ArrayList<WaveSelectionListener> waveSelectionListeners = new ArrayList<>();
     private ArrayList<WaveStatusListener> waveStatusListeners = new ArrayList<>();
+    private ArrayList<ScaleChangeListener> scaleChangeListeners = new ArrayList<>();
     private JPopupMenu popupMenu;
     private Point popupPosition;
     private HashMap<Waveform.DisplayFormat, JRadioButtonMenuItem> displayFormatMenuMap = new HashMap<>();
@@ -193,7 +194,9 @@ public class WavePanel extends JPanel implements Scrollable, MouseMotionListener
 
     private void update() {
         var maxTime = getMaxTime();
-        setPreferredSize(new Dimension(safeXCoordinateFromTime(maxTime).orElse(Integer.MAX_VALUE), WavevizSettings.WAVE_ROW_HEIGHT * model.size()));
+        var panelSize = new Dimension(safeXCoordinateFromTime(maxTime).orElse(Integer.MAX_VALUE), WavevizSettings.WAVE_ROW_HEIGHT * model.size());
+        setPreferredSize(panelSize);
+        scaleChangeListeners.forEach(listener -> listener.scaleChanged(pixelsPerUnitTime, panelSize.width));
         revalidate();
         repaint();
     }
@@ -221,7 +224,7 @@ public class WavePanel extends JPanel implements Scrollable, MouseMotionListener
         boolean result = true;
         if (pixelsPerUnitTime < 0) {
             if (pixelsPerUnitTime == -1)
-                pixelsPerUnitTime = 1;
+                pixelsPerUnitTime = 2;
             else
                 pixelsPerUnitTime /= 2;
         } else if (pixelsPerUnitTime > 0) {
@@ -244,7 +247,7 @@ public class WavePanel extends JPanel implements Scrollable, MouseMotionListener
                 result = false;
         } else if (pixelsPerUnitTime > 0) {
             if (pixelsPerUnitTime == 1)
-                pixelsPerUnitTime = -1;
+                pixelsPerUnitTime = -2;
             else
                 pixelsPerUnitTime /= 2;
         }
@@ -377,6 +380,10 @@ public class WavePanel extends JPanel implements Scrollable, MouseMotionListener
 
     public void addWaveStatusListener(WaveStatusListener listener) {
         waveStatusListeners.add(listener);
+    }
+
+    public void addScaleChangeListener(ScaleChangeListener listener) {
+        scaleChangeListeners.add(listener);
     }
 
     private class PopupListener extends MouseAdapter {
