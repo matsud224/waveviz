@@ -60,9 +60,14 @@ public class WaveInfoPanel extends JPanel implements Scrollable, MouseMotionList
         for (int i = 0; i < model.getWaveformCount(); i++) {
             Waveform wf = model.getWaveform(i);
             Signal signal = wf.getSignal();
+
             ArrayList<String> path = signal.getPath();
-            String w = wf.getName();
-            g2.drawString(w, 10, nowY);
+            String waveName = wf.getName();
+
+            String valueStr = wf.getSignal().getValueChangeStore().getValue(model.getCursor().getTime()).getValue();
+
+            String str = String.format("%s (%s)", waveName, valueStr);
+            g2.drawString(str, 10, nowY);
             nowY += WavevizSettings.WAVE_ROW_HEIGHT;
         }
     }
