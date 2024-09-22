@@ -169,14 +169,18 @@ public class WaveformPanel extends JPanel implements Scrollable, MouseMotionList
                             break;
                     }
                     var trimmedStr = WavevizUtilities.getTextWithinWidth(metrics, formattedStr, "..", rightX - x - WavevizSettings.WAVE_LABEL_RIGHT_PADDING * 2);
-                    g2.drawString(trimmedStr, x + WavevizSettings.WAVE_LABEL_RIGHT_PADDING, y + WavevizSettings.WAVE_Y_PADDING + WavevizSettings.WAVE_FONT_HEIGHT);
+                    if (!trimmedStr.equals(""))
+                        g2.drawString(trimmedStr, x + WavevizSettings.WAVE_LABEL_RIGHT_PADDING, y + WavevizSettings.WAVE_Y_PADDING + WavevizSettings.WAVE_FONT_HEIGHT);
                 }
 
                 if (pixelsPerUnitTime > 0) {
                     x = rightX;
                     t = tr.getEndTime() + 1;
                 } else {
-                    x += 1;
+                    if (x == rightX)
+                        x += 1;
+                    else
+                        x = rightX;
                     t = timeFromXCoordinate(x);
                 }
                 prevValue = tr.getValue();
