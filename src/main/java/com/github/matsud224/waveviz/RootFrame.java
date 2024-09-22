@@ -161,6 +161,22 @@ public class RootFrame extends JFrame implements ActionListener, TreeSelectionLi
             case "move-last":
                 waveViewModel.moveCursorToLast();
                 break;
+            case "move-prev-edge":
+                if (waveViewModel.getSelectedIndex().isPresent()) {
+                    Waveform selected = waveViewModel.getWaveform(waveViewModel.getSelectedIndex().get());
+                    int time = waveViewModel.getCursor().getTime();
+                    TimeRange tr = selected.getSignal().getValueChangeStore().getValue(Math.max(0, time - 1));
+                    waveViewModel.getCursor().setTime(tr.getStartTime());
+                }
+                break;
+            case "move-next-edge":
+                if (waveViewModel.getSelectedIndex().isPresent()) {
+                    Waveform selected = waveViewModel.getWaveform(waveViewModel.getSelectedIndex().get());
+                    int time = waveViewModel.getCursor().getTime();
+                    TimeRange tr = selected.getSignal().getValueChangeStore().getValue(time);
+                    waveViewModel.getCursor().setTime(Math.min(tr.getEndTime() + 1, waveViewModel.getMaxTime()));
+                }
+                break;
             default:
                 JOptionPane.showMessageDialog(this,
                         String.format("Action command \"%s\" is not implemented.", e.getActionCommand()), "Error", JOptionPane.ERROR_MESSAGE);
