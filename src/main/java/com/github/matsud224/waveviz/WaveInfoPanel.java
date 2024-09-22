@@ -3,23 +3,21 @@ package com.github.matsud224.waveviz;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Optional;
 
-public class WaveInfoPanel extends JPanel implements Scrollable, MouseMotionListener, MouseListener, WaveSelectionListener, ActionListener {
-    private ArrayList<Waveform> model;
-    private Optional<Integer> focusedIndex = Optional.empty();
-    private Optional<Integer> selectedIndex = Optional.empty();
-    private ArrayList<WaveSelectionListener> waveSelectionListeners = new ArrayList<>();
-    private ArrayList<WaveStatusListener> waveStatusListeners = new ArrayList<>();
+public class WaveInfoPanel extends JPanel implements Scrollable, MouseMotionListener, MouseListener, ActionListener, PropertyChangeListener {
+    private WaveViewModel model;
     private JPopupMenu popupMenu;
     private JCheckBoxMenuItem showFullPathMenuItem;
     private Point popupPosition;
     private Optional<Integer> dragTargetIndex = Optional.empty();
     private int dragToIndex;
 
-    public WaveInfoPanel() {
-        this.model = new ArrayList<>();
+    public WaveInfoPanel(WaveViewModel model) {
+        setModel(model);
         addMouseMotionListener(this);
         addMouseListener(this);
 
@@ -45,12 +43,12 @@ public class WaveInfoPanel extends JPanel implements Scrollable, MouseMotionList
         var r = g2.getClipBounds();
         g2.fillRect(r.x, r.y, r.width, r.height);
 
-        if (focusedIndex.isPresent()) {
+        if (model.getFocusedIndex().isPresent()) {
             g2.setColor(WavevizSettings.WAVE_FOCUSED_BACKGROUND_COLOR);
-            g2.fillRect(r.x, WavevizSettings.WAVE_ROW_HEIGHT * focusedIndex.get(), r.width, WavevizSettings.WAVE_ROW_HEIGHT);
+            g2.fillRect(r.x, WavevizSettings.WAVE_ROW_HEIGHT * model.getFocusedIndex().get(), r.width, WavevizSettings.WAVE_ROW_HEIGHT);
         }
-        if (selectedIndex.isPresent()) {
-            int index = selectedIndex.get();
+        if (model.getSelectedIndex().isPresent()) {
+            int index = model.getSelectedIndex().get();
             g2.setColor(WavevizSettings.WAVE_SELECTED_BACKGROUND_COLOR);
             g2.fillRect(r.x, WavevizSettings.WAVE_ROW_HEIGHT * index, r.width, WavevizSettings.WAVE_ROW_HEIGHT);
         }
@@ -59,8 +57,8 @@ public class WaveInfoPanel extends JPanel implements Scrollable, MouseMotionList
     private void paintWaveName(Graphics2D g2) {
         int nowY = WavevizSettings.WAVE_FONT_HEIGHT + WavevizSettings.WAVE_Y_PADDING;
         g2.setColor(Color.white);
-        for (int i = 0; i < model.size(); i++) {
-            Waveform wf = model.get(i);
+        for (int i = 0; i < model.getWaveformCount(); i++) {
+            Waveform wf = model.getWaveform(i);
             Signal signal = wf.getSignal();
             ArrayList<String> path = signal.getPath();
             String w = wf.getName();
@@ -72,7 +70,7 @@ public class WaveInfoPanel extends JPanel implements Scrollable, MouseMotionList
     private void paintRowSeparator(Graphics2D g2) {
         int nowY = WavevizSettings.WAVE_FONT_HEIGHT + WavevizSettings.WAVE_Y_PADDING * 2;
         g2.setColor(WavevizSettings.WAVE_ROW_SEPARATOR_COLOR);
-        for (int i = 0; i < model.size(); i++) {
+        for (int i = 0; i < model.getWaveformCount(); i++) {
             g2.drawLine(0, nowY, 1000, nowY);
             nowY += WavevizSettings.WAVE_FONT_HEIGHT + WavevizSettings.WAVE_Y_PADDING * 2;
         }
@@ -105,16 +103,19 @@ public class WaveInfoPanel extends JPanel implements Scrollable, MouseMotionList
         paintRowSeparator(g2);
     }
 
-    public ArrayList<Waveform> getModel() {
+    public WaveViewModel getModel() {
         return model;
     }
 
-    public void setModel(ArrayList<Waveform> model) {
-        this.model = model;
-        selectedIndex = Optional.empty();
-        setPreferredSize(new Dimension(1000, WavevizSettings.WAVE_ROW_HEIGHT * model.size()));
+    public void update() {
+        setPreferredSize(new Dimension(1000, WavevizSettings.WAVE_ROW_HEIGHT * model.getWaveformCount()));
         revalidate();
         repaint();
+    }
+
+    public void setModel(WaveViewModel model) {
+        this.model = model;
+        model.invalidateSelection();
     }
 
     @Override
@@ -157,14 +158,14 @@ public class WaveInfoPanel extends JPanel implements Scrollable, MouseMotionList
         if (dragTargetIndex.isEmpty()) {
             dragTargetIndex = Optional.of(e.getY() / WavevizSettings.WAVE_ROW_HEIGHT);
         }
-        dragToIndex = Math.min(Math.max(e.getY() / WavevizSettings.WAVE_ROW_HEIGHT, 0), model.size() - 1);
+        dragToIndex = Math.min(Math.max(e.getY() / WavevizSettings.WAVE_ROW_HEIGHT, 0), model.getWaveformCount() - 1);
         repaint();
     }
 
     @Override
     public void mouseReleased(MouseEvent e) {
         if (dragTargetIndex.isPresent()) {
-            waveStatusListeners.forEach(listener -> listener.waveReordered(dragTargetIndex.get(), dragToIndex));
+            model.reorderWaveform(dragTargetIndex.get(), dragToIndex);
             dragTargetIndex = Optional.empty();
         }
     }
@@ -172,33 +173,13 @@ public class WaveInfoPanel extends JPanel implements Scrollable, MouseMotionList
     @Override
     public void mouseMoved(MouseEvent e) {
         var index = e.getY() / WavevizSettings.WAVE_ROW_HEIGHT;
-        Optional<Integer> newFocusedIndex;
-        if (index < model.size()) {
-            newFocusedIndex = Optional.of(index);
-        } else {
-            newFocusedIndex = Optional.empty();
-        }
-        if (!focusedIndex.equals(newFocusedIndex)) {
-            waveSelectionListeners.forEach(listener -> listener.waveFocusChanged(newFocusedIndex));
-            focusedIndex = newFocusedIndex;
-            repaint();
-        }
+        model.setFocus(index);
     }
 
     @Override
     public void mouseClicked(MouseEvent e) {
         var index = e.getY() / WavevizSettings.WAVE_ROW_HEIGHT;
-        Optional<Integer> newSelectedIndex;
-        if (index < model.size()) {
-            newSelectedIndex = Optional.of(index);
-        } else {
-            newSelectedIndex = Optional.empty();
-        }
-        if (!selectedIndex.equals(newSelectedIndex)) {
-            waveSelectionListeners.forEach(listener -> listener.waveSelectionChanged(newSelectedIndex));
-            selectedIndex = newSelectedIndex;
-            repaint();
-        }
+        model.setSelection(index);
     }
 
     @Override
@@ -213,40 +194,23 @@ public class WaveInfoPanel extends JPanel implements Scrollable, MouseMotionList
 
     @Override
     public void mouseExited(MouseEvent e) {
-        waveSelectionListeners.forEach(listener -> listener.waveFocusChanged(Optional.empty()));
-        focusedIndex = Optional.empty();
-        repaint();
-    }
-
-    @Override
-    public void waveFocusChanged(Optional<Integer> index) {
-        focusedIndex = index;
-        repaint();
-    }
-
-    @Override
-    public void waveSelectionChanged(Optional<Integer> index) {
-        selectedIndex = index;
-        repaint();
-    }
-
-    public void addWaveSelectionListener(WaveSelectionListener listener) {
-        waveSelectionListeners.add(listener);
+        model.invalidateFocus();
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
         int index = (int) popupPosition.getY() / WavevizSettings.WAVE_ROW_HEIGHT;
         if (e.getActionCommand() == "wave-remove") {
-            waveStatusListeners.forEach(listener -> listener.waveRemoved(index));
+            model.removeWaveform(index);
         } else if (e.getActionCommand() == "wave-show-full-path") {
-            model.get(index).setIsShowFullPath(!model.get(index).getIsShowFullPath());
-            waveStatusListeners.forEach(listener -> listener.waveStatusChanged(index));
+            var wf = model.getWaveform(index);
+            wf.setIsShowFullPath(!wf.getIsShowFullPath());
         }
     }
 
-    public void addWaveStatusListener(WaveStatusListener listener) {
-        waveStatusListeners.add(listener);
+    @Override
+    public void propertyChange(PropertyChangeEvent evt) {
+        update();
     }
 
     private class PopupListener extends MouseAdapter {
@@ -263,7 +227,7 @@ public class WaveInfoPanel extends JPanel implements Scrollable, MouseMotionList
         private void showPopup(MouseEvent e) {
             if (e.isPopupTrigger()) {
                 int index = e.getY() / WavevizSettings.WAVE_ROW_HEIGHT;
-                showFullPathMenuItem.setSelected(model.get(index).getIsShowFullPath());
+                showFullPathMenuItem.setSelected(model.getWaveform(index).getIsShowFullPath());
                 popupPosition = e.getPoint();
                 popupMenu.show(e.getComponent(), e.getX(), e.getY());
             }

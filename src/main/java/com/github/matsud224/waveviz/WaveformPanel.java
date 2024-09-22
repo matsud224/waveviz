@@ -3,25 +3,22 @@ package com.github.matsud224.waveviz;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Optional;
 
-public class WavePanel extends JPanel implements Scrollable, MouseMotionListener, MouseListener, WaveSelectionListener, ActionListener {
-    private ArrayList<Waveform> model;
+public class WaveformPanel extends JPanel implements Scrollable, MouseMotionListener, MouseListener, ActionListener, PropertyChangeListener {
+    private WaveViewModel model;
     private int pixelsPerUnitTime = 40; // reciprocal if negative
-    private Optional<Integer> focusedIndex = Optional.empty();
-    private Optional<Integer> selectedIndex = Optional.empty();
-    private ArrayList<WaveSelectionListener> waveSelectionListeners = new ArrayList<>();
-    private ArrayList<WaveStatusListener> waveStatusListeners = new ArrayList<>();
     private ArrayList<ScaleChangeListener> scaleChangeListeners = new ArrayList<>();
     private JPopupMenu popupMenu;
     private Point popupPosition;
     private HashMap<Waveform.DisplayFormat, JRadioButtonMenuItem> displayFormatMenuMap = new HashMap<>();
 
-    public WavePanel() {
-        this.model = new ArrayList<>();
+    public WaveformPanel(WaveViewModel model) {
+        setModel(model);
         addMouseListener(this);
         addMouseMotionListener(this);
 
@@ -57,13 +54,13 @@ public class WavePanel extends JPanel implements Scrollable, MouseMotionListener
         var clipBounds = g2.getClipBounds();
         g2.fillRect(clipBounds.x, clipBounds.y, clipBounds.width, clipBounds.height);
 
-        if (focusedIndex.isPresent()) {
+        if (model.getFocusedIndex().isPresent()) {
             g2.setColor(WavevizSettings.WAVE_FOCUSED_BACKGROUND_COLOR);
-            g2.fillRect(clipBounds.x, WavevizSettings.WAVE_ROW_HEIGHT * focusedIndex.get(), clipBounds.width, WavevizSettings.WAVE_ROW_HEIGHT);
+            g2.fillRect(clipBounds.x, WavevizSettings.WAVE_ROW_HEIGHT * model.getFocusedIndex().get(), clipBounds.width, WavevizSettings.WAVE_ROW_HEIGHT);
         }
-        if (selectedIndex.isPresent()) {
+        if (model.getSelectedIndex().isPresent()) {
             g2.setColor(WavevizSettings.WAVE_SELECTED_BACKGROUND_COLOR);
-            g2.fillRect(clipBounds.x, WavevizSettings.WAVE_ROW_HEIGHT * selectedIndex.get(), clipBounds.width, WavevizSettings.WAVE_ROW_HEIGHT);
+            g2.fillRect(clipBounds.x, WavevizSettings.WAVE_ROW_HEIGHT * model.getSelectedIndex().get(), clipBounds.width, WavevizSettings.WAVE_ROW_HEIGHT);
         }
     }
 
@@ -99,22 +96,33 @@ public class WavePanel extends JPanel implements Scrollable, MouseMotionListener
         }
     }
 
+    private void paintMarkers(Graphics2D g2) {
+        var clipBounds = g2.getClipBounds();
+        for (Marker m : model.getMarkers()) {
+            int x = xCoordinateFromTime(m.getTime());
+            if (x >= clipBounds.x && x <= clipBounds.x + clipBounds.width) {
+                g2.setColor(m.getColor());
+                g2.drawLine(x, clipBounds.y, x, clipBounds.y + clipBounds.height);
+            }
+        }
+    }
+
     private void paintWaves(Graphics2D g2) {
         var clipBounds = g2.getClipBounds();
         int startIndex = clipBounds.y / WavevizSettings.WAVE_ROW_HEIGHT;
         for (int i = startIndex, y = startIndex * WavevizSettings.WAVE_ROW_HEIGHT;
-             i < model.size() && y < clipBounds.y + clipBounds.height;
+             i < model.getWaveformCount() && y < clipBounds.y + clipBounds.height;
              i++, y += WavevizSettings.WAVE_ROW_HEIGHT) {
 
             int upperY = y + WavevizSettings.WAVE_Y_PADDING;
             int lowerY = y + WavevizSettings.WAVE_ROW_HEIGHT - WavevizSettings.WAVE_Y_PADDING;
 
-            var wf = model.get(i);
+            var wf = model.getWaveform(i);
             var signal = wf.getSignal();
             var store = signal.getValueChangeStore();
 
             int startTime = timeFromXCoordinate(clipBounds.x);
-            int maxTime = getMaxTime();
+            int maxTime = model.getMaxTime();
             String prevValue = null;
             for (int t = startTime, x = xCoordinateFromTime(startTime);
                  x < clipBounds.x + clipBounds.width && t <= maxTime; ) {
@@ -176,10 +184,6 @@ public class WavePanel extends JPanel implements Scrollable, MouseMotionListener
         }
     }
 
-    private int getMaxTime() {
-        return model.stream().map(wf -> wf.getSignal().getValueChangeStore().getLastTime()).max(Comparator.naturalOrder()).orElse(0);
-    }
-
     @Override
     protected void paintComponent(Graphics g) {
         Graphics2D g2 = (Graphics2D) g;
@@ -190,26 +194,26 @@ public class WavePanel extends JPanel implements Scrollable, MouseMotionListener
 
         paintBackground(g2);
         paintWaves(g2);
+        paintMarkers(g2);
     }
 
     private void update() {
-        var maxTime = getMaxTime();
-        var panelSize = new Dimension(safeXCoordinateFromTime(maxTime).orElse(Integer.MAX_VALUE), WavevizSettings.WAVE_ROW_HEIGHT * model.size());
+        var maxTime = model.getMaxTime();
+        var panelSize = new Dimension(safeXCoordinateFromTime(maxTime).orElse(Integer.MAX_VALUE), WavevizSettings.WAVE_ROW_HEIGHT * model.getWaveformCount());
         setPreferredSize(panelSize);
         scaleChangeListeners.forEach(listener -> listener.scaleChanged(pixelsPerUnitTime, panelSize.width));
         revalidate();
         repaint();
     }
 
-    public ArrayList<Waveform> getModel() {
+    public WaveViewModel getModel() {
         return model;
     }
 
-    public void setModel(ArrayList<Waveform> model) {
+    public void setModel(WaveViewModel model) {
         this.model = model;
-        selectedIndex = Optional.empty();
 
-        while (safeXCoordinateFromTime(getMaxTime()).isEmpty()) {
+        while (safeXCoordinateFromTime(model.getMaxTime()).isEmpty()) {
             if (!zoomOut()) {
                 JOptionPane.showMessageDialog(this,
                         "Waveform is too large to display.", "Error", JOptionPane.ERROR_MESSAGE);
@@ -240,7 +244,7 @@ public class WavePanel extends JPanel implements Scrollable, MouseMotionListener
     public boolean zoomOut() {
         boolean result = true;
         if (pixelsPerUnitTime < 0) {
-            var maxTime = getMaxTime();
+            var maxTime = model.getMaxTime();
             if (xCoordinateFromTime(maxTime) > WavevizSettings.WAVE_MIN_WHOLE_WIDTH)
                 pixelsPerUnitTime *= 2;
             else
@@ -295,33 +299,14 @@ public class WavePanel extends JPanel implements Scrollable, MouseMotionListener
 
     @Override
     public void mouseMoved(MouseEvent e) {
-        var index = e.getY() / WavevizSettings.WAVE_ROW_HEIGHT;
-        Optional<Integer> newFocusedIndex;
-        if (index < model.size()) {
-            newFocusedIndex = Optional.of(index);
-        } else {
-            newFocusedIndex = Optional.empty();
-        }
-        if (!focusedIndex.equals(newFocusedIndex)) {
-            waveSelectionListeners.forEach(listener -> listener.waveFocusChanged(newFocusedIndex));
-            focusedIndex = newFocusedIndex;
-            repaint();
-        }
+
     }
 
     @Override
     public void mouseClicked(MouseEvent e) {
-        var index = e.getY() / WavevizSettings.WAVE_ROW_HEIGHT;
-        Optional<Integer> newSelectedIndex;
-        if (index < model.size()) {
-            newSelectedIndex = Optional.of(index);
-        } else {
-            newSelectedIndex = Optional.empty();
-        }
-        if (!selectedIndex.equals(newSelectedIndex)) {
-            waveSelectionListeners.forEach(listener -> listener.waveSelectionChanged(newSelectedIndex));
-            selectedIndex = newSelectedIndex;
-            repaint();
+        int t = timeFromXCoordinate(e.getX());
+        if (t <= model.getMaxTime()) {
+            model.getCursor().setTime(t);
         }
     }
 
@@ -342,48 +327,28 @@ public class WavePanel extends JPanel implements Scrollable, MouseMotionListener
 
     @Override
     public void mouseExited(MouseEvent e) {
-        focusedIndex = Optional.empty();
-        waveSelectionListeners.forEach(listener -> listener.waveFocusChanged(Optional.empty()));
-        repaint();
-    }
-
-    @Override
-    public void waveFocusChanged(Optional<Integer> index) {
-        focusedIndex = index;
-        repaint();
-    }
-
-    @Override
-    public void waveSelectionChanged(Optional<Integer> index) {
-        selectedIndex = index;
-        repaint();
-    }
-
-    public void addWaveSelectionListener(WaveSelectionListener listener) {
-        waveSelectionListeners.add(listener);
+        model.invalidateFocus();
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
+        int index = (int) (popupPosition.getY() / WavevizSettings.WAVE_ROW_HEIGHT);
         if (e.getActionCommand() == "wave-remove") {
-            waveStatusListeners.forEach(listener -> listener.waveRemoved((int) popupPosition.getY() / WavevizSettings.WAVE_ROW_HEIGHT));
+            model.removeWaveform(index);
         } else if (e.getActionCommand() == "wave-set-binary-display-format") {
-            int index = (int) popupPosition.getY() / WavevizSettings.WAVE_ROW_HEIGHT;
-            model.get(index).setDisplayFormat(Waveform.DisplayFormat.BINARY);
-            waveStatusListeners.forEach(listener -> listener.waveStatusChanged((int) popupPosition.getY() / WavevizSettings.WAVE_ROW_HEIGHT));
+            model.getWaveform(index).setDisplayFormat(Waveform.DisplayFormat.BINARY);
         } else if (e.getActionCommand() == "wave-set-hexadecimal-display-format") {
-            int index = (int) popupPosition.getY() / WavevizSettings.WAVE_ROW_HEIGHT;
-            model.get(index).setDisplayFormat(Waveform.DisplayFormat.HEXADECIMAL);
-            waveStatusListeners.forEach(listener -> listener.waveStatusChanged((int) popupPosition.getY() / WavevizSettings.WAVE_ROW_HEIGHT));
+            model.getWaveform(index).setDisplayFormat(Waveform.DisplayFormat.HEXADECIMAL);
         }
-    }
-
-    public void addWaveStatusListener(WaveStatusListener listener) {
-        waveStatusListeners.add(listener);
     }
 
     public void addScaleChangeListener(ScaleChangeListener listener) {
         scaleChangeListeners.add(listener);
+    }
+
+    @Override
+    public void propertyChange(PropertyChangeEvent evt) {
+        update();
     }
 
     private class PopupListener extends MouseAdapter {
@@ -401,7 +366,7 @@ public class WavePanel extends JPanel implements Scrollable, MouseMotionListener
             if (e.isPopupTrigger()) {
                 popupPosition = e.getPoint();
                 var index = (int) popupPosition.getY() / WavevizSettings.WAVE_ROW_HEIGHT;
-                displayFormatMenuMap.get(model.get(index).getDisplayFormat()).setSelected(true);
+                displayFormatMenuMap.get(model.getWaveform(index).getDisplayFormat()).setSelected(true);
                 popupMenu.show(e.getComponent(), e.getX(), e.getY());
             }
         }

@@ -4,67 +4,58 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-import java.util.ArrayList;
-import java.util.Optional;
 
-public class WaveView extends JPanel implements WaveStatusListener {
-    private final WavePanel wavePanel;
+public class WaveView extends JPanel {
+    private final WaveformPanel waveformPanel;
     private final WaveInfoPanel waveInfoPanel;
     private final TimeBar timeBar;
-    private ArrayList<Waveform> model;
+    private WaveViewModel model;
 
-    public WaveView() {
+    public WaveView(WaveViewModel model) {
         super(new BorderLayout());
 
-        wavePanel = new WavePanel();
-        wavePanel.addWaveStatusListener(this);
-        var waveScrollPane = new JScrollPane(wavePanel);
+        waveformPanel = new WaveformPanel(model);
+        var waveScrollPane = new JScrollPane(waveformPanel);
         waveScrollPane.getViewport().setBackground(WavevizSettings.WAVE_BACKGROUND_COLOR);
         waveScrollPane.getViewport().setScrollMode(JViewport.SIMPLE_SCROLL_MODE);
         waveScrollPane.addMouseListener(new MouseListener() {
             @Override
             public void mouseClicked(MouseEvent mouseEvent) {
-                wavePanel.waveSelectionChanged(Optional.empty());
-                waveInfoPanel.waveSelectionChanged(Optional.empty());
-                wavePanel.repaint();
-                waveInfoPanel.repaint();
+                model.invalidateSelection();
             }
 
             @Override
-            public void mousePressed(MouseEvent mouseEvent) {
-
-            }
-
-            @Override
-            public void mouseReleased(MouseEvent mouseEvent) {
+            public void mousePressed(MouseEvent e) {
 
             }
 
             @Override
-            public void mouseEntered(MouseEvent mouseEvent) {
+            public void mouseReleased(MouseEvent e) {
 
             }
 
             @Override
-            public void mouseExited(MouseEvent mouseEvent) {
+            public void mouseEntered(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
 
             }
         });
+
         timeBar = new TimeBar(40);
         waveScrollPane.setColumnHeaderView(timeBar);
 
-        waveInfoPanel = new WaveInfoPanel();
-        waveInfoPanel.addWaveStatusListener(this);
+        waveInfoPanel = new WaveInfoPanel(model);
         var waveInfoScrollPane = new JScrollPane(waveInfoPanel);
         waveInfoScrollPane.getViewport().setBackground(WavevizSettings.WAVE_BACKGROUND_COLOR);
         waveInfoScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
         waveInfoScrollPane.addMouseListener(new MouseListener() {
             @Override
             public void mouseClicked(MouseEvent mouseEvent) {
-                wavePanel.waveSelectionChanged(Optional.empty());
-                waveInfoPanel.waveSelectionChanged(Optional.empty());
-                wavePanel.repaint();
-                waveInfoPanel.repaint();
+                model.invalidateSelection();
             }
 
             @Override
@@ -107,51 +98,32 @@ public class WaveView extends JPanel implements WaveStatusListener {
         waveViewSplitPane.setOneTouchExpandable(true);
         add(waveViewSplitPane, BorderLayout.CENTER);
 
-        wavePanel.addWaveSelectionListener(waveInfoPanel);
-        wavePanel.addScaleChangeListener(timeBar);
-        waveInfoPanel.addWaveSelectionListener(wavePanel);
+        waveformPanel.addScaleChangeListener(timeBar);
 
-        model = new ArrayList<>();
+        setModel(model);
     }
 
-    public ArrayList<Waveform> getModel() {
+    public WaveViewModel getModel() {
         return model;
     }
 
-    public void setModel(ArrayList<Waveform> model) {
+    public void setModel(WaveViewModel model) {
+        if (this.model != null) {
+            this.model.removePropertyChangeListener(waveformPanel);
+            this.model.removePropertyChangeListener(waveInfoPanel);
+        }
         this.model = model;
-        wavePanel.setModel(model);
+        waveformPanel.setModel(model);
         waveInfoPanel.setModel(model);
+        this.model.addPropertyChangeListener(waveformPanel);
+        this.model.addPropertyChangeListener(waveInfoPanel);
     }
 
     public void zoomIn() {
-        wavePanel.zoomIn();
+        waveformPanel.zoomIn();
     }
 
     public void zoomOut() {
-        wavePanel.zoomOut();
-    }
-
-    @Override
-    public void waveRemoved(int index) {
-        model.remove(index);
-        setModel(model);
-    }
-
-    @Override
-    public void waveReordered(int targetIndex, int toIndex) {
-        if (targetIndex < 0 || targetIndex >= model.size())
-            return;
-
-        var target = model.get(targetIndex);
-        model.remove(targetIndex);
-        model.add(toIndex, target);
-        setModel(model);
-    }
-
-    @Override
-    public void waveStatusChanged(int index) {
-        wavePanel.repaint();
-        waveInfoPanel.repaint();
+        waveformPanel.zoomOut();
     }
 }

@@ -19,6 +19,7 @@ public class RootFrame extends JFrame implements ActionListener, TreeSelectionLi
     private final JTree hierTree;
     private final JTable signalList;
     private final WaveView waveView;
+    private final WaveViewModel waveViewModel;
 
     RootFrame() {
         setBounds(10, 10, 900, 600);
@@ -53,9 +54,7 @@ public class RootFrame extends JFrame implements ActionListener, TreeSelectionLi
                     int selectedRow = signalList.getSelectedRow();
                     if (selectedRow != -1) {
                         Signal selectedSignal = (Signal) signalList.getModel().getValueAt(selectedRow, 1);
-                        var m = waveView.getModel();
-                        m.add(new Waveform(selectedSignal));
-                        waveView.setModel(m);
+                        waveViewModel.addWaveform(new Waveform(selectedSignal));
                     }
                 }
             }
@@ -85,7 +84,8 @@ public class RootFrame extends JFrame implements ActionListener, TreeSelectionLi
         var signalViewSplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, new JScrollPane(this.hierTree), new JScrollPane(this.signalList));
         signalViewSplitPane.setDividerLocation(300);
 
-        waveView = new WaveView();
+        waveViewModel = new WaveViewModel();
+        waveView = new WaveView(waveViewModel);
 
         var rootSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, signalViewSplitPane, waveView);
         rootSplitPane.setDividerLocation(200);
@@ -154,6 +154,12 @@ public class RootFrame extends JFrame implements ActionListener, TreeSelectionLi
                 break;
             case "zoom-out":
                 waveView.zoomOut();
+                break;
+            case "move-first":
+                waveViewModel.moveCursorToFirst();
+                break;
+            case "move-last":
+                waveViewModel.moveCursorToLast();
                 break;
             default:
                 JOptionPane.showMessageDialog(this,
