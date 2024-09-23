@@ -13,15 +13,54 @@ public final class VCDParser {
         }
     }
 
+    public static class MetaData {
+        private String comment;
+        private String date;
+        private String version;
+        private String timeScale;
+
+        public String getComment() {
+            return comment;
+        }
+
+        public void setComment(String comment) {
+            this.comment = comment;
+        }
+
+        public String getDate() {
+            return date;
+        }
+
+        public void setDate(String date) {
+            this.date = date;
+        }
+
+        public String getVersion() {
+            return version;
+        }
+
+        public void setVersion(String version) {
+            this.version = version;
+        }
+
+        public String getTimeScale() {
+            return timeScale;
+        }
+
+        public void setTimeScale(String timeScale) {
+            this.timeScale = timeScale;
+        }
+    }
+
     private static class ParserInternalData {
         private final HierarchyTree hierarchy;
         private final HashMap<String, ValueChangeStore> storeMap;
-        private final HashMap<String, Object> metaDataMap;
+        private final MetaData metaData;
 
-        private ParserInternalData(HierarchyTree hierarchy, HashMap<String, ValueChangeStore> storeMap, HashMap<String, Object> metaDataMap) {
+        private ParserInternalData(HierarchyTree hierarchy, HashMap<String, ValueChangeStore> storeMap, MetaData metaData) {
             this.hierarchy = hierarchy;
             this.storeMap = storeMap;
-            this.metaDataMap = metaDataMap;
+            this.metaData = metaData;
         }
 
         public HierarchyTree getHierarchy() {
@@ -32,8 +71,26 @@ public final class VCDParser {
             return storeMap;
         }
 
-        public HashMap<String, Object> getMetaDataMap() {
-            return metaDataMap;
+        public MetaData getMetaData() {
+            return metaData;
+        }
+    }
+
+    public static class ParseResult {
+        private final HierarchyTree hierarchy;
+        private final MetaData metaData;
+
+        private ParseResult(HierarchyTree hierarchy, MetaData metaData) {
+            this.hierarchy = hierarchy;
+            this.metaData = metaData;
+        }
+
+        public HierarchyTree getHierarchy() {
+            return hierarchy;
+        }
+
+        public MetaData getMetaData() {
+            return metaData;
         }
     }
 
@@ -62,16 +119,16 @@ public final class VCDParser {
         TRI, TRIAND, TRIOR, TRIREG, TRI0, TRI1, WAND, WIRE, WOR
     }
 
-    public static HierarchyTree parse(Reader reader, String name) throws IOException, InvalidVCDFormatException {
+    public static ParseResult parse(Reader reader, String name) throws IOException, InvalidVCDFormatException {
         var internalData = parseDeclarationCommands(new PushbackReader(reader, 1024), name);
         var lastTime = parseSimulationCommands(internalData, new PushbackReader(reader, 1024));
         internalData.storeMap.forEach((k, v) -> v.addChange(lastTime, null));
-        return internalData.getHierarchy();
+        return new ParseResult(internalData.getHierarchy(), internalData.getMetaData());
     }
 
     private static ParserInternalData parseDeclarationCommands(PushbackReader reader, String name)
             throws IOException, InvalidVCDFormatException {
-        var metaDataMap = new HashMap<String, Object>();
+        var metaDataStore = new MetaData();
         var storeMap = new HashMap<String, ValueChangeStore>();
         var root = new HierarchyTree(name, "FILE", null);
         var currentScope = root;
@@ -82,14 +139,14 @@ public final class VCDParser {
             switch (kwOpt.get()) {
                 case COMMENT:
                     var commentStr = consumeUntilEnd(reader);
-                    metaDataMap.put("comment", commentStr);
+                    metaDataStore.setComment(commentStr);
                     break;
                 case DATE:
                     var dateStr = consumeUntilEnd(reader);
-                    metaDataMap.put("date", dateStr);
+                    metaDataStore.setDate(dateStr);
                     break;
                 case ENDDEFINITIONS:
-                    return new ParserInternalData(root, storeMap, metaDataMap);
+                    return new ParserInternalData(root, storeMap, metaDataStore);
                 case SCOPE:
                     var scopeType = parseScopeType(reader).orElseThrow(() -> new InvalidVCDFormatException("expected scope type of $scope"));
                     var scopeIdentifier = readWord(reader).orElseThrow(() -> new InvalidVCDFormatException("expected scope identifier of $scope"));
@@ -128,7 +185,7 @@ public final class VCDParser {
                     break;
                 case VERSION:
                     var versionStr = consumeUntilEnd(reader);
-                    metaDataMap.put("version", versionStr);
+                    metaDataStore.setVersion(versionStr);
                     break;
             }
         }

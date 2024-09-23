@@ -1,5 +1,8 @@
 package com.github.matsud224.waveviz;
 
+import com.github.matsud224.waveviz.VCDParser.MetaData;
+import com.github.matsud224.waveviz.VCDParser.ParseResult;
+
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
@@ -20,6 +23,7 @@ public class RootFrame extends JFrame implements ActionListener, TreeSelectionLi
     private final JTable signalList;
     private final WaveView waveView;
     private final WaveViewModel waveViewModel;
+    private ParseResult parseResult;
 
     RootFrame() {
         setBounds(10, 10, 900, 600);
@@ -35,6 +39,7 @@ public class RootFrame extends JFrame implements ActionListener, TreeSelectionLi
         menuMap.forEach((k, v) -> menuBar.add(v));
 
         addMenuItem("File", "Open", "open");
+        addMenuItem("File", "Show Metadata", "show-metadata");
         addMenuItem("File", "Exit", "exit");
         addMenuItem("View", "Zoom In", "zoom-in");
         addMenuItem("View", "Zoom Out", "zoom-out");
@@ -131,8 +136,8 @@ public class RootFrame extends JFrame implements ActionListener, TreeSelectionLi
                 fileChooser.addChoosableFileFilter(new FileNameExtensionFilter("VCD File", "vcd"));
                 if (fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
                     try (var bis = new PushbackReader(new FileReader(fileChooser.getSelectedFile()))) {
-                        var parseResult = VCDParser.parse(bis, fileChooser.getSelectedFile().getName());
-                        this.hierTree.setModel(parseResult);
+                        parseResult = VCDParser.parse(bis, fileChooser.getSelectedFile().getName());
+                        this.hierTree.setModel(parseResult.getHierarchy());
                         this.signalList.setModel(new SignalTableModel());
                     } catch (IOException ex) {
                         JOptionPane.showMessageDialog(this,
@@ -141,6 +146,17 @@ public class RootFrame extends JFrame implements ActionListener, TreeSelectionLi
                         JOptionPane.showMessageDialog(this,
                                 "Failed to parse VCD format: \n" + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
                     }
+                }
+                break;
+            case "show-metadata":
+                if (parseResult == null) {
+                    JOptionPane.showMessageDialog(this,
+                            "File is not opened.", "Error", JOptionPane.ERROR_MESSAGE);
+                } else {
+                    MetaData md = parseResult.getMetaData();
+                    var mdMsg = String.format("Version: %s\nDate: %s\nComment: %s\nTimescale: %s\n", md.getVersion(), md.getDate(), md.getComment(), md.getTimeScale());
+                    JOptionPane.showMessageDialog(this,
+                            mdMsg, "Metadata", JOptionPane.INFORMATION_MESSAGE);
                 }
                 break;
             case "exit":
