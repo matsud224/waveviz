@@ -45,7 +45,7 @@ public class WaveView extends JPanel {
             }
         });
 
-        timeBar = new TimeBar(40);
+        timeBar = new TimeBar(model, 40);
         waveScrollPane.setColumnHeaderView(timeBar);
 
         waveInfoPanel = new WaveInfoPanel(model);
@@ -111,12 +111,15 @@ public class WaveView extends JPanel {
         if (this.model != null) {
             this.model.removePropertyChangeListener(waveformPanel);
             this.model.removePropertyChangeListener(waveInfoPanel);
+            this.model.removePropertyChangeListener(timeBar);
         }
         this.model = model;
         waveformPanel.setModel(model);
         waveInfoPanel.setModel(model);
+        timeBar.setModel(model);
         this.model.addPropertyChangeListener(waveformPanel);
         this.model.addPropertyChangeListener(waveInfoPanel);
+        this.model.addPropertyChangeListener(timeBar);
     }
 
     public void zoomIn() {

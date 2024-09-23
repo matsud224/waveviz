@@ -2,12 +2,16 @@ package com.github.matsud224.waveviz;
 
 import javax.swing.*;
 import java.awt.*;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 
-public class TimeBar extends JComponent implements ScaleChangeListener {
+public class TimeBar extends JComponent implements ScaleChangeListener, PropertyChangeListener {
     private int increment;
     private int pixelsPerUnitTime = 2;
+    private WaveViewModel model;
 
-    public TimeBar(int increment) {
+    public TimeBar(WaveViewModel model, int increment) {
+        setModel(model);
         this.increment = increment;
 
         setPreferredSize(new Dimension(10000, WavevizSettings.TIMEBAR_HEIGHT));
@@ -94,5 +98,14 @@ public class TimeBar extends JComponent implements ScaleChangeListener {
         setPreferredWidth(width);
         this.pixelsPerUnitTime = pixelsPerUnitTime;
         repaint();
+    }
+
+    @Override
+    public void propertyChange(PropertyChangeEvent propertyChangeEvent) {
+        repaint();
+    }
+
+    public void setModel(WaveViewModel model) {
+        this.model = model;
     }
 }
