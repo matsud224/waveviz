@@ -12,8 +12,11 @@ public class ValueChangeStore {
     }
 
     public void addChange(int time, String numStr) {
-        timeArray.add(time);
-        valueArray.add(numStr);
+        String lastValue = valueArray.size() > 0 ? valueArray.get(valueArray.size() - 1) : "";
+        if (!lastValue.equals(numStr)) {
+            timeArray.add(time);
+            valueArray.add(numStr);
+        }
     }
 
     private int searchStartingTime(int time) {
