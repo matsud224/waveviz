@@ -31,7 +31,7 @@ public class TimeBar extends JComponent implements ScaleChangeListener, Property
 
     private int timeFromXCoordinate(int x) {
         if (pixelsPerUnitTime > 0) {
-            return Math.round((float) x / pixelsPerUnitTime);
+            return x / pixelsPerUnitTime;
         } else {
             return WavevizUtilities.safeMultiply(x, -pixelsPerUnitTime).orElse(Integer.MAX_VALUE);
         }
