@@ -126,4 +126,16 @@ public class WaveView extends JPanel {
     public void zoomOut() {
         waveformPanel.zoomOut();
     }
+
+    public void scrollToTime(int t) {
+        waveformPanel.scrollToTime(t);
+    }
+
+    public void scrollToMarker(Marker m) {
+        scrollToTime(m.getTime());
+    }
+
+    public void scrollToCursor() {
+        scrollToTime(model.getCursor().getTime());
+    }
 }

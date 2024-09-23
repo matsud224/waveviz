@@ -167,15 +167,19 @@ public class RootFrame extends JFrame implements ActionListener, TreeSelectionLi
                 break;
             case "zoom-in":
                 waveView.zoomIn();
+                waveView.scrollToCursor();
                 break;
             case "zoom-out":
                 waveView.zoomOut();
+                waveView.scrollToCursor();
                 break;
             case "move-first":
                 waveViewModel.moveCursorToFirst();
+                waveView.scrollToCursor();
                 break;
             case "move-last":
                 waveViewModel.moveCursorToLast();
+                waveView.scrollToCursor();
                 break;
             case "move-prev-edge":
                 if (waveViewModel.getSelectedIndex().isPresent()) {
@@ -183,6 +187,7 @@ public class RootFrame extends JFrame implements ActionListener, TreeSelectionLi
                     int time = waveViewModel.getCursor().getTime();
                     TimeRange tr = selected.getSignal().getValueChangeStore().getValue(Math.max(0, time - 1));
                     waveViewModel.getCursor().setTime(tr.getStartTime());
+                    waveView.scrollToCursor();
                 }
                 break;
             case "move-next-edge":
@@ -191,6 +196,7 @@ public class RootFrame extends JFrame implements ActionListener, TreeSelectionLi
                     int time = waveViewModel.getCursor().getTime();
                     TimeRange tr = selected.getSignal().getValueChangeStore().getValue(time);
                     waveViewModel.getCursor().setTime(Math.min(tr.getEndTime() + 1, waveViewModel.getMaxTime()));
+                    waveView.scrollToCursor();
                 }
                 break;
             default:

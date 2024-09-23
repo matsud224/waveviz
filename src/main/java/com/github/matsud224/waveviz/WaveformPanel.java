@@ -355,6 +355,11 @@ public class WaveformPanel extends JPanel implements Scrollable, MouseMotionList
         update();
     }
 
+    public void scrollToTime(int t) {
+        var x = xCoordinateFromTime(t);
+        scrollRectToVisible(new Rectangle(Math.max(x - 10, 0), getY(), 20, 1));
+    }
+
     private class PopupListener extends MouseAdapter {
         @Override
         public void mousePressed(MouseEvent e) {
