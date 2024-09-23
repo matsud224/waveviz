@@ -293,7 +293,8 @@ public class WaveformPanel extends JPanel implements Scrollable, MouseMotionList
 
     @Override
     public boolean getScrollableTracksViewportHeight() {
-        return false;
+        Container parent = SwingUtilities.getUnwrappedParent(this);
+        return parent instanceof JViewport && parent.getHeight() > this.getPreferredSize().height;
     }
 
     @Override
