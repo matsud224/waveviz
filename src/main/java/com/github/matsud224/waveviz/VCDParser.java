@@ -107,11 +107,36 @@ public final class VCDParser {
     }
 
     private enum TimeNumber {
-        ONE, TEN, THOUSAND
+        ONE, TEN, HUNDRED;
+
+        public int toInteger() {
+            switch (this) {
+                case ONE:
+                    return 1;
+                case TEN:
+                    return 10;
+                case HUNDRED:
+                    return 100;
+                default:
+                    return 0;
+            }
+        }
+
+
+        @Override
+        public String toString() {
+            return Integer.toString(toInteger());
+        }
     }
 
     private enum TimeUnit {
-        S, MS, US, NS, PS, FS
+        S, MS, US, NS, PS, FS;
+
+
+        @Override
+        public String toString() {
+            return super.toString().toLowerCase();
+        }
     }
 
     private enum VarType {
@@ -128,7 +153,7 @@ public final class VCDParser {
 
     private static ParserInternalData parseDeclarationCommands(PushbackReader reader, String name)
             throws IOException, InvalidVCDFormatException {
-        var metaDataStore = new MetaData();
+        var metaData = new MetaData();
         var storeMap = new HashMap<String, ValueChangeStore>();
         var root = new HierarchyTree(name, "FILE", null);
         var currentScope = root;
@@ -139,14 +164,14 @@ public final class VCDParser {
             switch (kwOpt.get()) {
                 case COMMENT:
                     var commentStr = consumeUntilEnd(reader);
-                    metaDataStore.setComment(commentStr);
+                    metaData.setComment(commentStr);
                     break;
                 case DATE:
                     var dateStr = consumeUntilEnd(reader);
-                    metaDataStore.setDate(dateStr);
+                    metaData.setDate(dateStr);
                     break;
                 case ENDDEFINITIONS:
-                    return new ParserInternalData(root, storeMap, metaDataStore);
+                    return new ParserInternalData(root, storeMap, metaData);
                 case SCOPE:
                     var scopeType = parseScopeType(reader).orElseThrow(() -> new InvalidVCDFormatException("expected scope type of $scope"));
                     var scopeIdentifier = readWord(reader).orElseThrow(() -> new InvalidVCDFormatException("expected scope identifier of $scope"));
@@ -159,7 +184,7 @@ public final class VCDParser {
                     var timeNumber = parseTimeNumber(reader).orElseThrow(() -> new InvalidVCDFormatException("expected time number of $timescale"));
                     var timeUnit = parseTimeUnit(reader).orElseThrow(() -> new InvalidVCDFormatException("expected time unit of $timescale"));
                     consumeEnd(reader);
-                    System.out.printf("Timescale: %s %s\n", timeNumber.toString(), timeUnit.toString());
+                    metaData.setTimeScale(timeNumber.toString() + timeUnit.toString());
                     break;
                 case UPSCOPE:
                     consumeEnd(reader);
@@ -185,7 +210,7 @@ public final class VCDParser {
                     break;
                 case VERSION:
                     var versionStr = consumeUntilEnd(reader);
-                    metaDataStore.setVersion(versionStr);
+                    metaData.setVersion(versionStr);
                     break;
             }
         }
@@ -470,7 +495,7 @@ public final class VCDParser {
             if (c != -1) reader.unread(c);
             return Optional.of(TimeNumber.TEN);
         }
-        return Optional.of(TimeNumber.THOUSAND);
+        return Optional.of(TimeNumber.HUNDRED);
     }
 
     private static Optional<TimeUnit> parseTimeUnit(PushbackReader reader) throws IOException {
