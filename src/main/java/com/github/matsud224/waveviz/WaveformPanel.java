@@ -66,7 +66,7 @@ public class WaveformPanel extends JPanel implements Scrollable, MouseMotionList
 
     private int timeFromXCoordinate(int x) {
         if (pixelsPerUnitTime > 0) {
-            return x / pixelsPerUnitTime;
+            return Math.round((float) x / pixelsPerUnitTime);
         } else {
             return WavevizUtilities.safeMultiply(x, -pixelsPerUnitTime).orElse(Integer.MAX_VALUE);
         }
