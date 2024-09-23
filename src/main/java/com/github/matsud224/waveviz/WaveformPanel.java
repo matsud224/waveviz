@@ -12,7 +12,7 @@ import java.util.Optional;
 public class WaveformPanel extends JPanel implements Scrollable, MouseMotionListener, MouseListener, ActionListener, PropertyChangeListener {
     private WaveViewModel model;
     private int pixelsPerUnitTime = 40; // reciprocal if negative
-    private ArrayList<ScaleChangeListener> scaleChangeListeners = new ArrayList<>();
+    private final ArrayList<ScaleChangeListener> scaleChangeListeners = new ArrayList<>();
     private JPopupMenu popupMenu;
     private Point popupPosition;
     private HashMap<Waveform.DisplayFormat, JRadioButtonMenuItem> displayFormatMenuMap = new HashMap<>();
@@ -169,7 +169,7 @@ public class WaveformPanel extends JPanel implements Scrollable, MouseMotionList
                             break;
                     }
                     var trimmedStr = WavevizUtilities.getTextWithinWidth(metrics, formattedStr, "..", rightX - x - WavevizSettings.WAVE_LABEL_RIGHT_PADDING * 2);
-                    if (!trimmedStr.equals(""))
+                    if (!trimmedStr.isEmpty())
                         g2.drawString(trimmedStr, x + WavevizSettings.WAVE_LABEL_RIGHT_PADDING, y + WavevizSettings.WAVE_Y_PADDING + WavevizSettings.WAVE_FONT_HEIGHT);
                 }
 
@@ -337,11 +337,11 @@ public class WaveformPanel extends JPanel implements Scrollable, MouseMotionList
     @Override
     public void actionPerformed(ActionEvent e) {
         int index = (int) (popupPosition.getY() / WavevizSettings.WAVE_ROW_HEIGHT);
-        if (e.getActionCommand() == "wave-remove") {
+        if (e.getActionCommand().equals("wave-remove")) {
             model.removeWaveform(index);
-        } else if (e.getActionCommand() == "wave-set-binary-display-format") {
+        } else if (e.getActionCommand().equals("wave-set-binary-display-format")) {
             model.getWaveform(index).setDisplayFormat(Waveform.DisplayFormat.BINARY);
-        } else if (e.getActionCommand() == "wave-set-hexadecimal-display-format") {
+        } else if (e.getActionCommand().equals("wave-set-hexadecimal-display-format")) {
             model.getWaveform(index).setDisplayFormat(Waveform.DisplayFormat.HEXADECIMAL);
         }
     }

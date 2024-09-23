@@ -5,7 +5,7 @@ import java.util.ArrayList;
 
 public class SignalTableModel extends AbstractTableModel {
     private final ArrayList<Signal> signals;
-    private String[] columns = {"type", "name"};
+    private final String[] columns = {"type", "name"};
 
     public SignalTableModel(ArrayList<Signal> signals) {
         this.signals = signals;

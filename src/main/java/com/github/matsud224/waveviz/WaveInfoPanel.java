@@ -5,7 +5,6 @@ import java.awt.*;
 import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.ArrayList;
 import java.util.Optional;
 
 public class WaveInfoPanel extends JPanel implements Scrollable, MouseMotionListener, MouseListener, ActionListener, PropertyChangeListener {
@@ -61,10 +60,9 @@ public class WaveInfoPanel extends JPanel implements Scrollable, MouseMotionList
             Waveform wf = model.getWaveform(i);
             Signal signal = wf.getSignal();
 
-            ArrayList<String> path = signal.getPath();
             String waveName = wf.getName();
 
-            String valueStr = wf.getSignal().getValueChangeStore().getValue(model.getCursor().getTime()).getValue();
+            String valueStr = signal.getValueChangeStore().getValue(model.getCursor().getTime()).getValue();
 
             String str = String.format("%s (%s)", waveName, valueStr);
             g2.drawString(str, 10, nowY);
@@ -205,9 +203,9 @@ public class WaveInfoPanel extends JPanel implements Scrollable, MouseMotionList
     @Override
     public void actionPerformed(ActionEvent e) {
         int index = (int) popupPosition.getY() / WavevizSettings.WAVE_ROW_HEIGHT;
-        if (e.getActionCommand() == "wave-remove") {
+        if (e.getActionCommand().equals("wave-remove")) {
             model.removeWaveform(index);
-        } else if (e.getActionCommand() == "wave-show-full-path") {
+        } else if (e.getActionCommand().equals("wave-show-full-path")) {
             var wf = model.getWaveform(index);
             wf.setIsShowFullPath(!wf.getIsShowFullPath());
         }

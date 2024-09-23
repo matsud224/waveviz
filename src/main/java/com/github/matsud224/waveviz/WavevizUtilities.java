@@ -36,7 +36,7 @@ public class WavevizUtilities {
         return hexStrBuilder.toString();
     }
 
-    static final Optional<Integer> safeMultiply(int left, int right) throws ArithmeticException {
+    static Optional<Integer> safeMultiply(int left, int right) throws ArithmeticException {
         if (right > 0 ? left > Integer.MAX_VALUE / right || left < Integer.MIN_VALUE / right :
                 (right < -1 ? left > Integer.MIN_VALUE / right || left < Integer.MAX_VALUE / right :
                         right == -1 && left == Integer.MIN_VALUE)) {
@@ -45,7 +45,7 @@ public class WavevizUtilities {
         return Optional.of(left * right);
     }
 
-    static final Optional<Integer> safeDivide(int left, int right) throws ArithmeticException {
+    static Optional<Integer> safeDivide(int left, int right) throws ArithmeticException {
         if ((left == Integer.MIN_VALUE) && (right == -1)) {
             return Optional.empty();
         }

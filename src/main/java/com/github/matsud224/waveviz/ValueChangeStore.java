@@ -12,7 +12,7 @@ public class ValueChangeStore {
     }
 
     public void addChange(int time, String numStr) {
-        String lastValue = valueArray.size() > 0 ? valueArray.get(valueArray.size() - 1) : "";
+        String lastValue = !valueArray.isEmpty() ? valueArray.get(valueArray.size() - 1) : "";
         if (!lastValue.equals(numStr)) {
             timeArray.add(time);
             valueArray.add(numStr);
@@ -32,7 +32,7 @@ public class ValueChangeStore {
             else
                 return mid;
         }
-        return high < 0 ? 0 : high;
+        return Math.max(high, 0);
     }
 
     public TimeRange getValue(int time) {

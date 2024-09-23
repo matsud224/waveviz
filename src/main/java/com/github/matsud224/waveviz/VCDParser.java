@@ -340,23 +340,23 @@ public final class VCDParser {
     private static String consumeUntilEnd(PushbackReader reader) throws IOException {
         var sb = new StringBuilder();
         while (true) {
-            Optional<String> wopt = readWord(reader);
-            if (wopt.isEmpty()) {
+            Optional<String> wordOpt = readWord(reader);
+            if (wordOpt.isEmpty()) {
                 break;
             } else {
-                if (wopt.get().equals("$end"))
+                if (wordOpt.get().equals("$end"))
                     break;
                 if (sb.length() != 0)
                     sb.append(' ');
-                sb.append(wopt.get());
+                sb.append(wordOpt.get());
             }
         }
         return sb.toString();
     }
 
     private static void consumeEnd(PushbackReader reader) throws IOException, InvalidVCDFormatException {
-        Optional<String> wopt = readWord(reader);
-        if (!(wopt.isPresent() && wopt.get().equals("$end"))) {
+        Optional<String> wordOpt = readWord(reader);
+        if (!(wordOpt.isPresent() && wordOpt.get().equals("$end"))) {
             throw new InvalidVCDFormatException("expected $end");
         }
     }
@@ -398,11 +398,11 @@ public final class VCDParser {
     }
 
     private static Optional<DeclarationKeyword> parseDeclarationKeyword(PushbackReader reader) throws IOException {
-        var wopt = readWord(reader);
-        if (wopt.isEmpty()) {
+        var wordOpt = readWord(reader);
+        if (wordOpt.isEmpty()) {
             return Optional.empty();
         } else {
-            switch (wopt.get()) {
+            switch (wordOpt.get()) {
                 case "$comment":
                     return Optional.of(DeclarationKeyword.COMMENT);
                 case "$date":
@@ -421,7 +421,7 @@ public final class VCDParser {
                     return Optional.of(DeclarationKeyword.VERSION);
                 default:
                     reader.unread(' ');
-                    reader.unread(wopt.get().toCharArray());
+                    reader.unread(wordOpt.get().toCharArray());
                     reader.unread(' ');
                     return Optional.empty();
             }
@@ -429,11 +429,11 @@ public final class VCDParser {
     }
 
     private static Optional<SimulationKeyword> parseSimulationKeyword(PushbackReader reader) throws IOException {
-        var wopt = readWord(reader);
-        if (wopt.isEmpty()) {
+        var wordOpt = readWord(reader);
+        if (wordOpt.isEmpty()) {
             return Optional.empty();
         } else {
-            switch (wopt.get()) {
+            switch (wordOpt.get()) {
                 case "$comment":
                     return Optional.of(SimulationKeyword.COMMENT);
                 case "$dumpall":
@@ -446,7 +446,7 @@ public final class VCDParser {
                     return Optional.of(SimulationKeyword.DUMPVARS);
                 default:
                     reader.unread(' ');
-                    reader.unread(wopt.get().toCharArray());
+                    reader.unread(wordOpt.get().toCharArray());
                     reader.unread(' ');
                     return Optional.empty();
             }
@@ -454,11 +454,11 @@ public final class VCDParser {
     }
 
     private static Optional<ScopeType> parseScopeType(PushbackReader reader) throws IOException {
-        var wopt = readWord(reader);
-        if (wopt.isEmpty()) {
+        var wordOpt = readWord(reader);
+        if (wordOpt.isEmpty()) {
             return Optional.empty();
         } else {
-            switch (wopt.get()) {
+            switch (wordOpt.get()) {
                 case "begin":
                     return Optional.of(ScopeType.BEGIN);
                 case "fork":
@@ -471,7 +471,7 @@ public final class VCDParser {
                     return Optional.of(ScopeType.TASK);
                 default:
                     reader.unread(' ');
-                    reader.unread(wopt.get().toCharArray());
+                    reader.unread(wordOpt.get().toCharArray());
                     reader.unread(' ');
                     return Optional.empty();
             }
@@ -499,11 +499,11 @@ public final class VCDParser {
     }
 
     private static Optional<TimeUnit> parseTimeUnit(PushbackReader reader) throws IOException {
-        var wopt = readWord(reader);
-        if (wopt.isEmpty()) {
+        var wordOpt = readWord(reader);
+        if (wordOpt.isEmpty()) {
             return Optional.empty();
         } else {
-            switch (wopt.get()) {
+            switch (wordOpt.get()) {
                 case "s":
                     return Optional.of(TimeUnit.S);
                 case "ms":
@@ -518,7 +518,7 @@ public final class VCDParser {
                     return Optional.of(TimeUnit.FS);
                 default:
                     reader.unread(' ');
-                    reader.unread(wopt.get().toCharArray());
+                    reader.unread(wordOpt.get().toCharArray());
                     reader.unread(' ');
                     return Optional.empty();
             }
@@ -526,11 +526,11 @@ public final class VCDParser {
     }
 
     private static Optional<VarType> parseVarType(PushbackReader reader) throws IOException {
-        var wopt = readWord(reader);
-        if (wopt.isEmpty()) {
+        var wordOpt = readWord(reader);
+        if (wordOpt.isEmpty()) {
             return Optional.empty();
         } else {
-            switch (wopt.get()) {
+            switch (wordOpt.get()) {
                 case "event":
                     return Optional.of(VarType.EVENT);
                 case "integer":
@@ -569,7 +569,7 @@ public final class VCDParser {
                     return Optional.of(VarType.WOR);
                 default:
                     reader.unread(' ');
-                    reader.unread(wopt.get().toCharArray());
+                    reader.unread(wordOpt.get().toCharArray());
                     reader.unread(' ');
                     return Optional.empty();
             }
