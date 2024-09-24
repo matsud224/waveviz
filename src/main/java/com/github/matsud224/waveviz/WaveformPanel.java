@@ -216,7 +216,6 @@ public class WaveformPanel extends JPanel implements Scrollable, MouseMotionList
     }
 
     private void update() {
-        var maxTime = model.getEndTime();
         var panelSize = new Dimension(getRequiredWidth().orElse(Integer.MAX_VALUE), WavevizSettings.WAVE_ROW_HEIGHT * model.getWaveformCount());
         setPreferredSize(panelSize);
         scaleChangeListeners.forEach(listener -> listener.scaleChanged(pixelsPerUnitTime, panelSize.width));
