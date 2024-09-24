@@ -30,14 +30,25 @@ public class TimeBar extends JComponent implements ScaleChangeListener, Property
     }
 
     private int timeFromXCoordinate(int x) {
+        int t;
         if (pixelsPerUnitTime > 0) {
-            return x / pixelsPerUnitTime;
+            t = x / pixelsPerUnitTime;
         } else {
-            return WavevizUtilities.safeMultiply(x, -pixelsPerUnitTime).orElse(Integer.MAX_VALUE);
+            t = WavevizUtilities.safeMultiply(x, -pixelsPerUnitTime).orElse(Integer.MAX_VALUE);
         }
+        return t + model.getStartTime();
     }
 
     private int xCoordinateFromTime(int t) {
+        t = t - model.getStartTime();
+        if (pixelsPerUnitTime > 0) {
+            return WavevizUtilities.safeMultiply(t, pixelsPerUnitTime).orElse(Integer.MAX_VALUE);
+        } else {
+            return t / (-pixelsPerUnitTime);
+        }
+    }
+
+    private int pixelsOfTimeSpan(int t) {
         if (pixelsPerUnitTime > 0) {
             return WavevizUtilities.safeMultiply(t, pixelsPerUnitTime).orElse(Integer.MAX_VALUE);
         } else {
@@ -94,7 +105,7 @@ public class TimeBar extends JComponent implements ScaleChangeListener, Property
         int currentX = xCoordinateFromTime(currentTime);
 
         while (currentX < clipBounds.x + clipBounds.width) {
-            int rightX = currentX + xCoordinateFromTime(timeLabelInterval);
+            int rightX = currentX + pixelsOfTimeSpan(timeLabelInterval);
 
             g2.setColor(WavevizSettings.WAVE_TEXT_COLOR);
             var metrics = g2.getFontMetrics();

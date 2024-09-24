@@ -93,8 +93,12 @@ public class WaveViewModel implements PropertyChangeListener {
         this.pcs.firePropertyChange(WAVEFORM_PROPERTY, null, null);
     }
 
-    public int getMaxTime() {
-        return waveforms.stream().map(wf -> wf.getSignal().getValueChangeStore().getLastTime()).max(Comparator.naturalOrder()).orElse(0);
+    public int getStartTime() {
+        return waveforms.stream().map(wf -> wf.getSignal().getValueChangeStore().getStartTime()).min(Comparator.naturalOrder()).orElse(0);
+    }
+
+    public int getEndTime() {
+        return waveforms.stream().map(wf -> wf.getSignal().getValueChangeStore().getEndTime()).max(Comparator.naturalOrder()).orElse(0);
     }
 
     public ArrayList<Marker> getMarkers() {
@@ -182,7 +186,7 @@ public class WaveViewModel implements PropertyChangeListener {
     }
 
     public void moveCursorToLast() {
-        this.cursor.setTime(getMaxTime());
+        this.cursor.setTime(getEndTime());
         this.pcs.firePropertyChange(MARKER_PROPERTY, null, null);
     }
 

@@ -43,7 +43,11 @@ public class ValueChangeStore {
             return new TimeRange(timeArray.get(startingPos), timeArray.get(startingPos + 1) - 1, valueArray.get(startingPos));
     }
 
-    public int getLastTime() {
+    public int getStartTime() {
+        return timeArray.get(0);
+    }
+
+    public int getEndTime() {
         return timeArray.get(timeArray.size() - 1);
     }
 }

@@ -196,7 +196,7 @@ public class RootFrame extends JFrame implements ActionListener, TreeSelectionLi
                     Waveform selected = waveViewModel.getWaveform(waveViewModel.getSelectedIndex().get());
                     int time = waveViewModel.getCursor().getTime();
                     TimeRange tr = selected.getSignal().getValueChangeStore().getValue(time);
-                    waveViewModel.getCursor().setTime(Math.min(tr.getEndTime() + 1, waveViewModel.getMaxTime()));
+                    waveViewModel.getCursor().setTime(Math.min(tr.getEndTime() + 1, waveViewModel.getEndTime()));
                     waveView.scrollToCursor();
                 }
                 break;
