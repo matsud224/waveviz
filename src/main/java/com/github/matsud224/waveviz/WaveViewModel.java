@@ -14,6 +14,8 @@ public class WaveViewModel implements PropertyChangeListener {
 
     private final Marker cursor;
 
+    private Timescale timescale;
+
     private Optional<Integer> focusedIndex = Optional.empty();
     private Optional<Integer> selectedIndex = Optional.empty();
 
@@ -187,5 +189,14 @@ public class WaveViewModel implements PropertyChangeListener {
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
         this.pcs.firePropertyChange(evt);
+    }
+
+    public Timescale getTimescale() {
+        return timescale;
+    }
+
+    public void setTimescale(Timescale timescale) {
+        this.timescale = timescale;
+        this.pcs.firePropertyChange(WAVEFORM_PROPERTY, null, null);
     }
 }

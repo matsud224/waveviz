@@ -45,6 +45,22 @@ public class TimeBar extends JComponent implements ScaleChangeListener, Property
         }
     }
 
+    private String timeToLabel(int time) {
+        var ts = model.getTimescale();
+        time = ts.getMultiplier() * time;
+        var unit = ts.getTimeUnit();
+        while (time % 1000 == 0) {
+            var nextUnit = unit.getGreaterUnit();
+            if (nextUnit.isPresent()) {
+                time /= 1000;
+                unit = nextUnit.get();
+            } else {
+                break;
+            }
+        }
+        return time + unit.toString();
+    }
+
     @Override
     protected void paintComponent(Graphics g) {
         var g2 = (Graphics2D) g;
@@ -56,6 +72,9 @@ public class TimeBar extends JComponent implements ScaleChangeListener, Property
 
         g2.setColor(WavevizSettings.WAVE_BACKGROUND_COLOR);
         g2.fillRect(clipBounds.x, clipBounds.y, clipBounds.width, clipBounds.height);
+
+        if (model.getTimescale() == null)
+            return;
 
         int startTime = timeFromXCoordinate(clipBounds.x);
 
@@ -79,7 +98,7 @@ public class TimeBar extends JComponent implements ScaleChangeListener, Property
 
             g2.setColor(WavevizSettings.WAVE_TEXT_COLOR);
             var metrics = g2.getFontMetrics();
-            var labelStr = WavevizUtilities.getTextWithinWidth(metrics, String.format("%d ns", currentTime), "..", rightX - currentX - WavevizSettings.WAVE_LABEL_RIGHT_PADDING * 2);
+            var labelStr = WavevizUtilities.getTextWithinWidth(metrics, timeToLabel(currentTime), "..", rightX - currentX - WavevizSettings.WAVE_LABEL_RIGHT_PADDING * 2);
             g2.drawString(labelStr, currentX + WavevizSettings.WAVE_LABEL_RIGHT_PADDING, WavevizSettings.WAVE_Y_PADDING + WavevizSettings.WAVE_FONT_HEIGHT);
 
             g2.setColor(WavevizSettings.TIMEBAR_LINE_COLOR);

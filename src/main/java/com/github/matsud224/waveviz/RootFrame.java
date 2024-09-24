@@ -139,6 +139,7 @@ public class RootFrame extends JFrame implements ActionListener, TreeSelectionLi
                         parseResult = VCDParser.parse(bis, fileChooser.getSelectedFile().getName());
                         this.hierTree.setModel(parseResult.getHierarchy());
                         this.signalList.setModel(new SignalTableModel());
+                        waveViewModel.setTimescale(parseResult.getMetaData().getTimeScale());
                     } catch (IOException ex) {
                         JOptionPane.showMessageDialog(this,
                                 "Failed to read file:\n" + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);

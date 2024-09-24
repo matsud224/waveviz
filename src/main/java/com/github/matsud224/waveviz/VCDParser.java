@@ -13,43 +13,70 @@ public final class VCDParser {
         }
     }
 
-    public static class MetaData {
-        private String comment;
-        private String date;
-        private String version;
-        private String timeScale;
+    private static ParserInternalData parseDeclarationCommands(PushbackReader reader, String name)
+            throws IOException, InvalidVCDFormatException {
+        var metaData = new MetaData();
+        var storeMap = new HashMap<String, ValueChangeStore>();
+        var root = new HierarchyTree(name, "FILE", null);
+        var currentScope = root;
+        while (true) {
+            var kwOpt = parseDeclarationKeyword(reader);
+            if (kwOpt.isEmpty())
+                break;
+            switch (kwOpt.get()) {
+                case COMMENT:
+                    var commentStr = consumeUntilEnd(reader);
+                    metaData.setComment(commentStr);
+                    break;
+                case DATE:
+                    var dateStr = consumeUntilEnd(reader);
+                    metaData.setDate(dateStr);
+                    break;
+                case ENDDEFINITIONS:
+                    return new ParserInternalData(root, storeMap, metaData);
+                case SCOPE:
+                    var scopeType = parseScopeType(reader).orElseThrow(() -> new InvalidVCDFormatException("expected scope type of $scope"));
+                    var scopeIdentifier = readWord(reader).orElseThrow(() -> new InvalidVCDFormatException("expected scope identifier of $scope"));
+                    consumeEnd(reader);
+                    var scope = new HierarchyTree(scopeIdentifier, scopeType.toString(), currentScope);
+                    currentScope.children.add(scope);
+                    currentScope = scope;
+                    break;
+                case TIMESCALE:
+                    var multiplier = parseTimescaleMultiplier(reader).orElseThrow(() -> new InvalidVCDFormatException("expected time number of $timescale"));
+                    var timeUnit = parseTimeUnit(reader).orElseThrow(() -> new InvalidVCDFormatException("expected time unit of $timescale"));
+                    consumeEnd(reader);
+                    metaData.setTimeScale(new Timescale(multiplier, timeUnit));
+                    break;
+                case UPSCOPE:
+                    consumeEnd(reader);
+                    currentScope = currentScope.getParent();
+                    break;
+                case VAR:
+                    var varType = parseVarType(reader).orElseThrow(() -> new InvalidVCDFormatException("expected var type of $var"));
+                    var size = Integer.parseInt(readWord(reader).orElseThrow(() -> new InvalidVCDFormatException("expected size of $var")));
+                    var identifier = readWord(reader).orElseThrow(() -> new InvalidVCDFormatException("expected identifier of $var"));
+                    var reference = getReference(reader);
+                    consumeEnd(reader);
 
-        public String getComment() {
-            return comment;
-        }
+                    var store = storeMap.get(identifier);
+                    if (store == null) {
+                        store = new ValueChangeStore();
+                        storeMap.put(identifier, store);
+                    }
 
-        public void setComment(String comment) {
-            this.comment = comment;
+                    var path = currentScope.getPath();
+                    path.add(reference);
+                    var signal = new Signal(path, varType.toString(), size, store);
+                    currentScope.signals.add(signal);
+                    break;
+                case VERSION:
+                    var versionStr = consumeUntilEnd(reader);
+                    metaData.setVersion(versionStr);
+                    break;
+            }
         }
-
-        public String getDate() {
-            return date;
-        }
-
-        public void setDate(String date) {
-            this.date = date;
-        }
-
-        public String getVersion() {
-            return version;
-        }
-
-        public void setVersion(String version) {
-            this.version = version;
-        }
-
-        public String getTimeScale() {
-            return timeScale;
-        }
-
-        public void setTimeScale(String timeScale) {
-            this.timeScale = timeScale;
-        }
+        throw new InvalidVCDFormatException("no declaration commands found");
     }
 
     private static class ParserInternalData {
@@ -106,39 +133,6 @@ public final class VCDParser {
         BEGIN, FORK, FUNCTION, MODULE, TASK
     }
 
-    private enum TimeNumber {
-        ONE, TEN, HUNDRED;
-
-        public int toInteger() {
-            switch (this) {
-                case ONE:
-                    return 1;
-                case TEN:
-                    return 10;
-                case HUNDRED:
-                    return 100;
-                default:
-                    return 0;
-            }
-        }
-
-
-        @Override
-        public String toString() {
-            return Integer.toString(toInteger());
-        }
-    }
-
-    private enum TimeUnit {
-        S, MS, US, NS, PS, FS;
-
-
-        @Override
-        public String toString() {
-            return super.toString().toLowerCase();
-        }
-    }
-
     private enum VarType {
         EVENT, INTEGER, PARAMETER, REAL, REALTIME, REG, SUPPLY0, SUPPLY1, TIME,
         TRI, TRIAND, TRIOR, TRIREG, TRI0, TRI1, WAND, WIRE, WOR
@@ -151,70 +145,24 @@ public final class VCDParser {
         return new ParseResult(internalData.getHierarchy(), internalData.getMetaData());
     }
 
-    private static ParserInternalData parseDeclarationCommands(PushbackReader reader, String name)
-            throws IOException, InvalidVCDFormatException {
-        var metaData = new MetaData();
-        var storeMap = new HashMap<String, ValueChangeStore>();
-        var root = new HierarchyTree(name, "FILE", null);
-        var currentScope = root;
-        while (true) {
-            var kwOpt = parseDeclarationKeyword(reader);
-            if (kwOpt.isEmpty())
-                break;
-            switch (kwOpt.get()) {
-                case COMMENT:
-                    var commentStr = consumeUntilEnd(reader);
-                    metaData.setComment(commentStr);
-                    break;
-                case DATE:
-                    var dateStr = consumeUntilEnd(reader);
-                    metaData.setDate(dateStr);
-                    break;
-                case ENDDEFINITIONS:
-                    return new ParserInternalData(root, storeMap, metaData);
-                case SCOPE:
-                    var scopeType = parseScopeType(reader).orElseThrow(() -> new InvalidVCDFormatException("expected scope type of $scope"));
-                    var scopeIdentifier = readWord(reader).orElseThrow(() -> new InvalidVCDFormatException("expected scope identifier of $scope"));
-                    consumeEnd(reader);
-                    var scope = new HierarchyTree(scopeIdentifier, scopeType.toString(), currentScope);
-                    currentScope.children.add(scope);
-                    currentScope = scope;
-                    break;
-                case TIMESCALE:
-                    var timeNumber = parseTimeNumber(reader).orElseThrow(() -> new InvalidVCDFormatException("expected time number of $timescale"));
-                    var timeUnit = parseTimeUnit(reader).orElseThrow(() -> new InvalidVCDFormatException("expected time unit of $timescale"));
-                    consumeEnd(reader);
-                    metaData.setTimeScale(timeNumber.toString() + timeUnit.toString());
-                    break;
-                case UPSCOPE:
-                    consumeEnd(reader);
-                    currentScope = currentScope.getParent();
-                    break;
-                case VAR:
-                    var varType = parseVarType(reader).orElseThrow(() -> new InvalidVCDFormatException("expected var type of $var"));
-                    var size = Integer.parseInt(readWord(reader).orElseThrow(() -> new InvalidVCDFormatException("expected size of $var")));
-                    var identifier = readWord(reader).orElseThrow(() -> new InvalidVCDFormatException("expected identifier of $var"));
-                    var reference = getReference(reader);
-                    consumeEnd(reader);
-
-                    var store = storeMap.get(identifier);
-                    if (store == null) {
-                        store = new ValueChangeStore();
-                        storeMap.put(identifier, store);
-                    }
-
-                    var path = currentScope.getPath();
-                    path.add(reference);
-                    var signal = new Signal(path, varType.toString(), size, store);
-                    currentScope.signals.add(signal);
-                    break;
-                case VERSION:
-                    var versionStr = consumeUntilEnd(reader);
-                    metaData.setVersion(versionStr);
-                    break;
-            }
+    private static Optional<Integer> parseTimescaleMultiplier(PushbackReader reader) throws IOException {
+        skipWhitespaces(reader);
+        var c = reader.read();
+        if (c != '1') {
+            if (c != -1) reader.unread(c);
+            return Optional.empty();
         }
-        throw new InvalidVCDFormatException("no declaration commands found");
+        c = reader.read();
+        if (c != '0') {
+            if (c != -1) reader.unread(c);
+            return Optional.of(1);
+        }
+        c = reader.read();
+        if (c != '0') {
+            if (c != -1) reader.unread(c);
+            return Optional.of(10);
+        }
+        return Optional.of(100);
     }
 
     private static String getReference(PushbackReader reader) throws InvalidVCDFormatException, IOException {
@@ -478,50 +426,69 @@ public final class VCDParser {
         }
     }
 
-    private static Optional<TimeNumber> parseTimeNumber(PushbackReader reader) throws IOException {
-        skipWhitespaces(reader);
-        var c = reader.read();
-        if (c != '1') {
-            if (c != -1) reader.unread(c);
-            return Optional.empty();
-        }
-        c = reader.read();
-        if (c != '0') {
-            if (c != -1) reader.unread(c);
-            return Optional.of(TimeNumber.ONE);
-        }
-        c = reader.read();
-        if (c != '0') {
-            if (c != -1) reader.unread(c);
-            return Optional.of(TimeNumber.TEN);
-        }
-        return Optional.of(TimeNumber.HUNDRED);
-    }
-
-    private static Optional<TimeUnit> parseTimeUnit(PushbackReader reader) throws IOException {
+    private static Optional<Timescale.TimeUnit> parseTimeUnit(PushbackReader reader) throws IOException {
         var wordOpt = readWord(reader);
         if (wordOpt.isEmpty()) {
             return Optional.empty();
         } else {
             switch (wordOpt.get()) {
                 case "s":
-                    return Optional.of(TimeUnit.S);
+                    return Optional.of(Timescale.TimeUnit.S);
                 case "ms":
-                    return Optional.of(TimeUnit.MS);
+                    return Optional.of(Timescale.TimeUnit.MS);
                 case "us":
-                    return Optional.of(TimeUnit.US);
+                    return Optional.of(Timescale.TimeUnit.US);
                 case "ns":
-                    return Optional.of(TimeUnit.NS);
+                    return Optional.of(Timescale.TimeUnit.NS);
                 case "ps":
-                    return Optional.of(TimeUnit.PS);
+                    return Optional.of(Timescale.TimeUnit.PS);
                 case "fs":
-                    return Optional.of(TimeUnit.FS);
+                    return Optional.of(Timescale.TimeUnit.FS);
                 default:
                     reader.unread(' ');
                     reader.unread(wordOpt.get().toCharArray());
                     reader.unread(' ');
                     return Optional.empty();
             }
+        }
+    }
+
+    public static class MetaData {
+        private String comment;
+        private String date;
+        private String version;
+        private Timescale timeScale;
+
+        public String getComment() {
+            return comment;
+        }
+
+        public void setComment(String comment) {
+            this.comment = comment;
+        }
+
+        public String getDate() {
+            return date;
+        }
+
+        public void setDate(String date) {
+            this.date = date;
+        }
+
+        public String getVersion() {
+            return version;
+        }
+
+        public void setVersion(String version) {
+            this.version = version;
+        }
+
+        public Timescale getTimeScale() {
+            return timeScale;
+        }
+
+        public void setTimeScale(Timescale timeScale) {
+            this.timeScale = timeScale;
         }
     }
 
