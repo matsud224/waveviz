@@ -1,5 +1,6 @@
 package com.github.matsud224.waveviz;
 
+import org.jruby.embed.LocalVariableBehavior;
 import org.jruby.embed.ScriptingContainer;
 
 import javax.swing.*;
@@ -16,7 +17,7 @@ public class ConsolePane extends JPanel {
     public ConsolePane() throws IOException {
         super(new BorderLayout());
 
-        container = new ScriptingContainer();
+        container = new ScriptingContainer(LocalVariableBehavior.PERSISTENT);
 
         PipedOutputStream sender = new PipedOutputStream();
         PipedInputStream receiver = new PipedInputStream(sender);
