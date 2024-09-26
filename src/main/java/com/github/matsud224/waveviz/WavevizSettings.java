@@ -20,6 +20,8 @@ public class WavevizSettings {
     public static final Font WAVE_NORMAL_FONT = new Font("Arial", Font.PLAIN, WAVE_FONT_HEIGHT);
     public static final Font WAVE_MONOSPACE_FONT = new Font("Courier", Font.PLAIN, WAVE_FONT_HEIGHT - 2);
 
+    public static final Font CONSOLE_FONT = new Font("Courier", Font.PLAIN, 14);
+
     public static final Color TIMEBAR_LINE_COLOR = Color.white;
     public static final int TIMEBAR_HEIGHT = 30;
 }

@@ -44,11 +44,11 @@ public class ConsolePane extends JPanel {
         }
 
         consoleOutputArea = new JTextArea();
-        consoleOutputArea.setFont(WavevizSettings.WAVE_MONOSPACE_FONT);
+        consoleOutputArea.setFont(WavevizSettings.CONSOLE_FONT);
         consoleOutputArea.setEditable(false);
 
         consoleInputField = new JTextField();
-        consoleInputField.setFont(WavevizSettings.WAVE_MONOSPACE_FONT);
+        consoleInputField.setFont(WavevizSettings.CONSOLE_FONT);
 
         consoleInputField.addKeyListener(new KeyListener() {
             @Override
