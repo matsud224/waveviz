@@ -31,7 +31,12 @@ public class ConsolePane extends JPanel {
                 while (true) {
                     try {
                         int newChar = receiverReader.read();
-                        SwingUtilities.invokeLater(() -> consoleOutputArea.append(Character.toString(newChar)));
+                        if (newChar == -1) {
+                            SwingUtilities.invokeLater(() -> consoleOutputArea.append("--- closed ---"));
+                            return;
+                        } else {
+                            SwingUtilities.invokeLater(() -> consoleOutputArea.append(Character.toString(newChar)));
+                        }
                     } catch (IOException ignored) {
                     }
                 }
