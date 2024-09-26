@@ -23,6 +23,7 @@ public class RootFrame extends JFrame implements ActionListener, TreeSelectionLi
     private final JTable signalList;
     private final WaveView waveView;
     private final WaveViewModel waveViewModel;
+    private final ConsolePane consolePane;
     private ParseResult parseResult;
 
     RootFrame() {
@@ -92,7 +93,17 @@ public class RootFrame extends JFrame implements ActionListener, TreeSelectionLi
         waveViewModel = new WaveViewModel();
         waveView = new WaveView(waveViewModel);
 
-        var rootSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, signalViewSplitPane, waveView);
+        try {
+            consolePane = new ConsolePane();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        var waveConsoleSplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, waveView, consolePane);
+        waveConsoleSplitPane.setDividerLocation(300);
+        waveConsoleSplitPane.setOneTouchExpandable(true);
+
+        var rootSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, signalViewSplitPane, waveConsoleSplitPane);
         rootSplitPane.setDividerLocation(200);
         rootSplitPane.setOneTouchExpandable(true);
         getContentPane().add(rootSplitPane, BorderLayout.CENTER);
