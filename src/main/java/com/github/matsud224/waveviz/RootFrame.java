@@ -94,7 +94,7 @@ public class RootFrame extends JFrame implements ActionListener, TreeSelectionLi
         waveView = new WaveView(waveViewModel);
 
         try {
-            consolePane = new ConsolePane();
+            consolePane = new ConsolePane(waveViewModel);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

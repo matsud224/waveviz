@@ -14,7 +14,7 @@ public class ConsolePane extends JPanel {
     private final JTextField consoleInputField;
     private final ScriptingContainer container;
 
-    public ConsolePane() throws IOException {
+    public ConsolePane(WaveViewModel model) throws IOException {
         super(new BorderLayout());
 
         container = new ScriptingContainer(LocalVariableBehavior.PERSISTENT);
@@ -45,6 +45,7 @@ public class ConsolePane extends JPanel {
 
         // Initialize JRuby (to make startup time appear shorter)
         try {
+            container.put("Model", model);
             container.runScriptlet("puts \"*** waveviz Ruby console ***\"");
         } catch (Exception ignored) {
         }
