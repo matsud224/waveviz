@@ -8,11 +8,17 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.io.*;
+import java.util.LinkedList;
+import java.util.ListIterator;
 
 public class ConsolePane extends JPanel {
     private final JTextArea consoleOutputArea;
     private final JTextField consoleInputField;
     private final ScriptingContainer container;
+
+    private final int MAX_HISTORY = 100;
+    private final LinkedList<String> lineHistory = new LinkedList<>();
+    private ListIterator<String> historyFetchIter;
 
     public ConsolePane(WaveViewModel model) throws IOException {
         super(new BorderLayout());
@@ -60,7 +66,7 @@ public class ConsolePane extends JPanel {
         consoleInputField.addKeyListener(new KeyListener() {
             @Override
             public void keyTyped(KeyEvent e) {
-                if (e.getID() == KeyEvent.KEY_TYPED && e.getKeyChar() == '\n') {
+                if (e.getKeyChar() == '\n') {
                     String cmd = consoleInputField.getText();
                     consoleOutputArea.append("> " + cmd + "\n");
 
@@ -70,6 +76,9 @@ public class ConsolePane extends JPanel {
                         consoleOutputArea.append(ex.getMessage() + "\n");
                     }
 
+                    doneHistoryFetch();
+                    recordHistory(cmd);
+
                     consoleInputField.setText("");
                     consoleOutputArea.setCaretPosition(consoleOutputArea.getDocument().getLength());
                 }
@@ -77,7 +86,15 @@ public class ConsolePane extends JPanel {
 
             @Override
             public void keyPressed(KeyEvent e) {
-
+                if (e.getKeyCode() == KeyEvent.VK_UP) {
+                    var nextHistory = getNextHistory();
+                    if (nextHistory != null)
+                        consoleInputField.setText(nextHistory);
+                } else if (e.getKeyCode() == KeyEvent.VK_DOWN) {
+                    var previousHistory = getPreviousHistory();
+                    if (previousHistory != null)
+                        consoleInputField.setText(previousHistory);
+                }
             }
 
             @Override
@@ -88,5 +105,28 @@ public class ConsolePane extends JPanel {
 
         add(new JScrollPane(consoleOutputArea), BorderLayout.CENTER);
         add(consoleInputField, BorderLayout.SOUTH);
+    }
+
+    private void recordHistory(String line) {
+        if (lineHistory.size() == MAX_HISTORY) {
+            lineHistory.removeLast();
+        }
+        lineHistory.addFirst(line);
+    }
+
+    private String getNextHistory() {
+        if (historyFetchIter == null)
+            historyFetchIter = lineHistory.listIterator();
+        return historyFetchIter.hasNext() ? historyFetchIter.next() : null;
+    }
+
+    private String getPreviousHistory() {
+        if (historyFetchIter == null)
+            historyFetchIter = lineHistory.listIterator();
+        return historyFetchIter.hasPrevious() ? historyFetchIter.previous() : null;
+    }
+
+    private void doneHistoryFetch() {
+        historyFetchIter = null;
     }
 }
