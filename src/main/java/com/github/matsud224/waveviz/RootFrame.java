@@ -129,7 +129,7 @@ public class RootFrame extends JFrame implements ActionListener, WindowListener 
                 }
                 break;
             case "exit":
-                System.exit(0);
+                this.dispatchEvent(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
                 break;
             case "about":
                 JOptionPane.showMessageDialog(this, "waveviz");
