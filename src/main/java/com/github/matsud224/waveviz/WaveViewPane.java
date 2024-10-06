@@ -5,13 +5,13 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 
-public class WaveView extends JPanel {
+public class WaveViewPane extends JPanel {
     private final WaveformPanel waveformPanel;
     private final WaveInfoPanel waveInfoPanel;
     private final TimeBar timeBar;
     private WaveViewModel model;
 
-    public WaveView(WaveViewModel model) {
+    public WaveViewPane(WaveViewModel model) {
         super(new BorderLayout());
 
         waveformPanel = new WaveformPanel(model);

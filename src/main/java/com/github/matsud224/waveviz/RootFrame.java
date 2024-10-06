@@ -1,34 +1,38 @@
 package com.github.matsud224.waveviz;
 
+import bibliothek.gui.dock.common.CControl;
+import bibliothek.gui.dock.common.menu.SingleCDockableListMenuPiece;
+import bibliothek.gui.dock.facile.menu.RootMenuPiece;
 import com.github.matsud224.waveviz.VCDParser.MetaData;
 import com.github.matsud224.waveviz.VCDParser.ParseResult;
 
 import javax.swing.*;
-import javax.swing.event.TreeSelectionEvent;
-import javax.swing.event.TreeSelectionListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.PushbackReader;
 import java.util.LinkedHashMap;
 
-public class RootFrame extends JFrame implements ActionListener, TreeSelectionListener {
+public class RootFrame extends JFrame implements ActionListener {
     private final LinkedHashMap<String, JMenu> menuMap;
-    private final JTree hierTree;
-    private final JTable signalList;
-    private final WaveView waveView;
     private final WaveViewModel waveViewModel;
-    private final ConsolePane consolePane;
+    private final PaneManager paneManager;
     private ParseResult parseResult;
 
     RootFrame() {
         setBounds(10, 10, 900, 600);
         setTitle("waveviz");
+
+        waveViewModel = new WaveViewModel();
+
+        // Create dockable frames
+        CControl control = new CControl(this);
+        this.getContentPane().add(control.getContentArea());
+        paneManager = new PaneManager(control, waveViewModel);
+        paneManager.getWorkingArea().setVisible(true);
 
         // Create menu bar
         this.menuMap = new LinkedHashMap<>();
@@ -46,67 +50,11 @@ public class RootFrame extends JFrame implements ActionListener, TreeSelectionLi
         addMenuItem("View", "Zoom Out", "zoom-out");
         addMenuItem("Help", "About", "about");
 
+        RootMenuPiece paneListMenu = new RootMenuPiece("Panes", false);
+        paneListMenu.add(new SingleCDockableListMenuPiece(control));
+        menuMap.get("View").add(paneListMenu.getMenu());
+
         setJMenuBar(menuBar);
-
-        // Create signal view
-        this.hierTree = new JTree(new HierarchyTree("(no data)", "VOID", null));
-        this.hierTree.addTreeSelectionListener(this);
-
-        this.signalList = new JTable(new SignalTableModel());
-        this.signalList.addMouseListener(new MouseListener() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                if (e.getClickCount() == 2) {
-                    int selectedRow = signalList.getSelectedRow();
-                    if (selectedRow != -1) {
-                        Signal selectedSignal = (Signal) signalList.getModel().getValueAt(selectedRow, 1);
-                        waveViewModel.addWaveform(new Waveform(selectedSignal));
-                    }
-                }
-            }
-
-            @Override
-            public void mousePressed(MouseEvent mouseEvent) {
-
-            }
-
-            @Override
-            public void mouseReleased(MouseEvent mouseEvent) {
-
-            }
-
-            @Override
-            public void mouseEntered(MouseEvent mouseEvent) {
-
-            }
-
-            @Override
-            public void mouseExited(MouseEvent mouseEvent) {
-
-            }
-        });
-
-        // Create panes
-        var signalViewSplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, new JScrollPane(this.hierTree), new JScrollPane(this.signalList));
-        signalViewSplitPane.setDividerLocation(300);
-
-        waveViewModel = new WaveViewModel();
-        waveView = new WaveView(waveViewModel);
-
-        try {
-            consolePane = new ConsolePane(waveViewModel);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
-        var waveConsoleSplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, waveView, consolePane);
-        waveConsoleSplitPane.setDividerLocation(300);
-        waveConsoleSplitPane.setOneTouchExpandable(true);
-
-        var rootSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, signalViewSplitPane, waveConsoleSplitPane);
-        rootSplitPane.setDividerLocation(200);
-        rootSplitPane.setOneTouchExpandable(true);
-        getContentPane().add(rootSplitPane, BorderLayout.CENTER);
 
         // Create toolbar
         var waveViewToolbar = new JToolBar();
@@ -148,8 +96,7 @@ public class RootFrame extends JFrame implements ActionListener, TreeSelectionLi
                 if (fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
                     try (var bis = new PushbackReader(new FileReader(fileChooser.getSelectedFile()))) {
                         parseResult = VCDParser.parse(bis, fileChooser.getSelectedFile().getName());
-                        this.hierTree.setModel(parseResult.getHierarchy());
-                        this.signalList.setModel(new SignalTableModel());
+                        paneManager.getSignalFinderPane().setHierarchyModel(parseResult.getHierarchy());
                         waveViewModel.setTimescale(parseResult.getMetaData().getTimeScale());
                     } catch (IOException ex) {
                         JOptionPane.showMessageDialog(this,
@@ -178,20 +125,20 @@ public class RootFrame extends JFrame implements ActionListener, TreeSelectionLi
                 JOptionPane.showMessageDialog(this, "waveviz");
                 break;
             case "zoom-in":
-                waveView.zoomIn();
-                waveView.scrollToCursor();
+                paneManager.getWaveViewPane().zoomIn();
+                paneManager.getWaveViewPane().scrollToCursor();
                 break;
             case "zoom-out":
-                waveView.zoomOut();
-                waveView.scrollToCursor();
+                paneManager.getWaveViewPane().zoomOut();
+                paneManager.getWaveViewPane().scrollToCursor();
                 break;
             case "move-first":
                 waveViewModel.moveCursorToFirst();
-                waveView.scrollToCursor();
+                paneManager.getWaveViewPane().scrollToCursor();
                 break;
             case "move-last":
                 waveViewModel.moveCursorToLast();
-                waveView.scrollToCursor();
+                paneManager.getWaveViewPane().scrollToCursor();
                 break;
             case "move-prev-edge":
                 if (waveViewModel.getSelectedIndex().isPresent()) {
@@ -199,7 +146,7 @@ public class RootFrame extends JFrame implements ActionListener, TreeSelectionLi
                     int time = waveViewModel.getCursor().getTime();
                     TimeRange tr = selected.getSignal().getValueChangeStore().getValue(Math.max(0, time - 1));
                     waveViewModel.getCursor().setTime(tr.getStartTime());
-                    waveView.scrollToCursor();
+                    paneManager.getWaveViewPane().scrollToCursor();
                 }
                 break;
             case "move-next-edge":
@@ -208,7 +155,7 @@ public class RootFrame extends JFrame implements ActionListener, TreeSelectionLi
                     int time = waveViewModel.getCursor().getTime();
                     TimeRange tr = selected.getSignal().getValueChangeStore().getValue(time);
                     waveViewModel.getCursor().setTime(Math.min(tr.getEndTime() + 1, waveViewModel.getEndTime()));
-                    waveView.scrollToCursor();
+                    paneManager.getWaveViewPane().scrollToCursor();
                 }
                 break;
             default:
@@ -223,13 +170,5 @@ public class RootFrame extends JFrame implements ActionListener, TreeSelectionLi
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         frame.setVisible(true);
-    }
-
-    @Override
-    public void valueChanged(TreeSelectionEvent e) {
-        System.out.println(e.getPath().toString());
-        var selected = (HierarchyTree) e.getPath().getLastPathComponent();
-        System.out.printf("signals: %d\n", selected.signals.size());
-        this.signalList.setModel(new SignalTableModel(selected.signals));
     }
 }
