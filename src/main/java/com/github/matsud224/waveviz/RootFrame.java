@@ -11,12 +11,15 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
+import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.PushbackReader;
 import java.util.LinkedHashMap;
 
-public class RootFrame extends JFrame implements ActionListener {
+public class RootFrame extends JFrame implements ActionListener, WindowListener {
     private final LinkedHashMap<String, JMenu> menuMap;
     private final WaveViewModel waveViewModel;
     private final PaneManager paneManager;
@@ -25,6 +28,7 @@ public class RootFrame extends JFrame implements ActionListener {
     RootFrame() {
         setBounds(10, 10, 900, 600);
         setTitle("waveviz");
+        addWindowListener(this);
 
         waveViewModel = new WaveViewModel();
 
@@ -33,6 +37,12 @@ public class RootFrame extends JFrame implements ActionListener {
         this.getContentPane().add(control.getContentArea());
         paneManager = new PaneManager(control, waveViewModel);
         paneManager.getWorkingArea().setVisible(true);
+
+        try {
+            control.read(new File(WavevizSettings.PANE_LAYOUT_FILE));
+        } catch (IOException e) {
+            System.out.println("Failed to read layout file.");
+        }
 
         // Create menu bar
         this.menuMap = new LinkedHashMap<>();
@@ -170,5 +180,44 @@ public class RootFrame extends JFrame implements ActionListener {
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         frame.setVisible(true);
+    }
+
+    @Override
+    public void windowOpened(WindowEvent e) {
+
+    }
+
+    @Override
+    public void windowClosing(WindowEvent e) {
+        try {
+            paneManager.getControl().write(new File(WavevizSettings.PANE_LAYOUT_FILE));
+        } catch (IOException ioException) {
+            System.out.println("Failed to write to layout file.");
+        }
+    }
+
+    @Override
+    public void windowClosed(WindowEvent e) {
+
+    }
+
+    @Override
+    public void windowIconified(WindowEvent e) {
+
+    }
+
+    @Override
+    public void windowDeiconified(WindowEvent e) {
+
+    }
+
+    @Override
+    public void windowActivated(WindowEvent e) {
+
+    }
+
+    @Override
+    public void windowDeactivated(WindowEvent e) {
+
     }
 }

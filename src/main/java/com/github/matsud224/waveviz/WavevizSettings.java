@@ -24,4 +24,6 @@ public class WavevizSettings {
 
     public static final Color TIMEBAR_LINE_COLOR = Color.white;
     public static final int TIMEBAR_HEIGHT = 30;
+
+    public static final String PANE_LAYOUT_FILE = "layout.data";
 }
