@@ -211,7 +211,6 @@ public final class VCDParser {
                 var store = internalData.storeMap.get(idCode);
                 if (store == null) {
                     System.out.printf("Warning: ignoring unknown identifier code %s\n", idCode);
-                    System.exit(-1);
                 } else {
                     store.addChange(time, Character.toString(c));
                 }
@@ -227,7 +226,6 @@ public final class VCDParser {
                 var store = internalData.storeMap.get(idCode);
                 if (store == null) {
                     System.out.printf("Warning: ignoring unknown identifier code %s\n", idCode);
-                    System.exit(-1);
                 } else {
                     store.addChange(time, numStr);
                 }
