@@ -10,8 +10,10 @@ import java.util.HashMap;
 import java.util.Optional;
 
 public class WaveformPanel extends JPanel implements Scrollable, MouseMotionListener, MouseListener, ActionListener, PropertyChangeListener {
+    private final int ZOOM_POWER = 10;
+
     private WaveViewModel model;
-    private int pixelsPerUnitTime = 40; // reciprocal if negative
+    private int pixelsPerUnitTime = ZOOM_POWER; // reciprocal if negative
     private final ArrayList<ScaleChangeListener> scaleChangeListeners = new ArrayList<>();
     private JPopupMenu popupMenu;
     private Point popupPosition;
@@ -245,12 +247,12 @@ public class WaveformPanel extends JPanel implements Scrollable, MouseMotionList
         boolean result = true;
         if (pixelsPerUnitTime < 0) {
             if (pixelsPerUnitTime == -1)
-                pixelsPerUnitTime = 2;
+                pixelsPerUnitTime = ZOOM_POWER;
             else
-                pixelsPerUnitTime /= 2;
+                pixelsPerUnitTime /= ZOOM_POWER;
         } else if (pixelsPerUnitTime > 0) {
-            if (pixelsPerUnitTime * 2 <= WavevizSettings.WAVE_MAX_PIXELS_PER_UNIT_TIME)
-                pixelsPerUnitTime *= 2;
+            if (pixelsPerUnitTime * ZOOM_POWER <= WavevizSettings.WAVE_MAX_PIXELS_PER_UNIT_TIME)
+                pixelsPerUnitTime *= ZOOM_POWER;
             else
                 result = false;
         }
@@ -263,14 +265,14 @@ public class WaveformPanel extends JPanel implements Scrollable, MouseMotionList
         if (pixelsPerUnitTime < 0) {
             var maxTime = model.getEndTime();
             if (xCoordinateFromTime(maxTime) > WavevizSettings.WAVE_MIN_WHOLE_WIDTH)
-                pixelsPerUnitTime *= 2;
+                pixelsPerUnitTime *= ZOOM_POWER;
             else
                 result = false;
         } else if (pixelsPerUnitTime > 0) {
             if (pixelsPerUnitTime == 1)
-                pixelsPerUnitTime = -2;
+                pixelsPerUnitTime = -ZOOM_POWER;
             else
-                pixelsPerUnitTime /= 2;
+                pixelsPerUnitTime /= ZOOM_POWER;
         }
         update();
         return result;
