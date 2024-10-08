@@ -1,6 +1,7 @@
 package com.github.matsud224.waveviz;
 
 import org.jruby.embed.LocalVariableBehavior;
+import org.jruby.embed.PathType;
 import org.jruby.embed.ScriptingContainer;
 
 import javax.swing.*;
@@ -8,6 +9,7 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.io.*;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.ListIterator;
 
@@ -19,6 +21,17 @@ public class ConsolePane extends JPanel {
     private final int MAX_HISTORY = 100;
     private final LinkedList<String> lineHistory = new LinkedList<>();
     private ListIterator<String> historyFetchIter;
+
+    private DecoderManager decoderManager = new DecoderManager();
+
+    public class DecoderManager {
+        private ArrayList<String> decoders = new ArrayList<>();
+
+        public void registerDecoder(String name) {
+            decoders.add(name);
+            System.out.printf("Decoder \"%s\" is registered.\n", name);
+        }
+    }
 
     public ConsolePane(WaveViewModel model) throws IOException {
         super(new BorderLayout());
@@ -49,16 +62,22 @@ public class ConsolePane extends JPanel {
             }
         }).start();
 
-        // Initialize JRuby (to make startup time appear shorter)
-        try {
-            container.put("Model", model);
-            container.runScriptlet("puts \"*** waveviz Ruby console ***\"");
-        } catch (Exception ignored) {
-        }
-
         consoleOutputArea = new JTextArea();
         consoleOutputArea.setFont(WavevizSettings.CONSOLE_FONT);
         consoleOutputArea.setEditable(false);
+
+        // Initialize JRuby (to make startup time appear shorter)
+        try {
+            container.put("Model", model);
+            container.put("Decoders", decoderManager);
+            container.runScriptlet("puts \"*** waveviz Ruby console ***\"");
+        } catch (Exception ignored) {
+        }
+        try {
+            container.runScriptlet(PathType.RELATIVE, "src/main/resources/scripts/init.rb");
+        } catch (Exception e) {
+            consoleOutputArea.append(String.format("Failed to load init.rb: %s\n", e.getMessage()));
+        }
 
         consoleInputField = new JTextField();
         consoleInputField.setFont(WavevizSettings.CONSOLE_FONT);
