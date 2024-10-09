@@ -16,7 +16,7 @@ public class PaneManager {
     private WaveViewPane waveViewPane;
     private ConsolePane consolePane;
 
-    public PaneManager(CControl control, WaveViewModel waveViewModel) {
+    public PaneManager(CControl control, WaveViewModel waveViewModel, Waveviz wavevizObject) {
         this.control = control;
 
         workingArea = control.createWorkingArea("wave area");
@@ -24,9 +24,9 @@ public class PaneManager {
         workingArea.setVisible(true);
 
         signalFinderPane = new SignalFinderPane(waveViewModel);
-        waveViewPane = new WaveViewPane(waveViewModel);
+        waveViewPane = new WaveViewPane(waveViewModel, wavevizObject);
         try {
-            consolePane = new ConsolePane(waveViewModel);
+            consolePane = new ConsolePane(waveViewModel, wavevizObject);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

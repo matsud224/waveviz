@@ -1,25 +1,31 @@
 package com.github.matsud224.waveviz;
 
+import org.jruby.Ruby;
+import org.jruby.RubyProc;
+import org.jruby.RubyString;
+import org.jruby.runtime.builtin.IRubyObject;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Optional;
 
 public class WaveformPanel extends JPanel implements Scrollable, MouseMotionListener, MouseListener, ActionListener, PropertyChangeListener {
     private final int ZOOM_POWER = 10;
+    private final Waveviz wavevizObject;
 
     private WaveViewModel model;
     private int pixelsPerUnitTime = ZOOM_POWER; // reciprocal if negative
     private final ArrayList<ScaleChangeListener> scaleChangeListeners = new ArrayList<>();
     private JPopupMenu popupMenu;
     private Point popupPosition;
-    private HashMap<Waveform.DisplayFormat, JRadioButtonMenuItem> displayFormatMenuMap = new HashMap<>();
+    private JMenu displayFormatMenu;
 
-    public WaveformPanel(WaveViewModel model) {
+    public WaveformPanel(WaveViewModel model, Waveviz wavevizObject) {
+        this.wavevizObject = wavevizObject;
         setModel(model);
         addMouseListener(this);
         addMouseMotionListener(this);
@@ -31,23 +37,10 @@ public class WaveformPanel extends JPanel implements Scrollable, MouseMotionList
         removeMenuItem.addActionListener(this);
         popupMenu.add(removeMenuItem);
 
-        var displayFormatMenu = new JMenu("Display Format");
-        var displayFormatButtonGroup = new ButtonGroup();
-        var binaryFormatMenuItem = new JRadioButtonMenuItem("Binary");
-        binaryFormatMenuItem.setActionCommand("wave-set-binary-display-format");
-        binaryFormatMenuItem.addActionListener(this);
-        displayFormatButtonGroup.add(binaryFormatMenuItem);
-        displayFormatMenu.add(binaryFormatMenuItem);
-        displayFormatMenuMap.put(Waveform.DisplayFormat.BINARY, binaryFormatMenuItem);
-        var hexadecimalFormatMenuItem = new JRadioButtonMenuItem("Hexadecimal");
-        hexadecimalFormatMenuItem.setActionCommand("wave-set-hexadecimal-display-format");
-        hexadecimalFormatMenuItem.addActionListener(this);
-        displayFormatButtonGroup.add(hexadecimalFormatMenuItem);
-        displayFormatMenu.add(hexadecimalFormatMenuItem);
-        displayFormatMenuMap.put(Waveform.DisplayFormat.HEXADECIMAL, hexadecimalFormatMenuItem);
+        this.displayFormatMenu = new JMenu("Display Format");
         popupMenu.add(displayFormatMenu);
 
-        MouseListener popupListener = new PopupListener();
+        MouseListener popupListener = new PopupListener(this);
         addMouseListener(popupListener);
     }
 
@@ -140,6 +133,10 @@ public class WaveformPanel extends JPanel implements Scrollable, MouseMotionList
             int startTime = timeFromXCoordinate(clipBounds.x);
             int maxTime = model.getEndTime();
             String prevValue = null;
+
+            RubyProc formatterProc = wavevizObject.getFormatters().get(wf.getDisplayFormat());
+            Ruby runtime = formatterProc.getRuntime();
+
             for (int t = startTime, x = xCoordinateFromTime(startTime);
                  x < clipBounds.x + clipBounds.width && t <= maxTime; ) {
                 TimeRange tr = store.getValue(t);
@@ -176,14 +173,9 @@ public class WaveformPanel extends JPanel implements Scrollable, MouseMotionList
                     var metrics = g2.getFontMetrics();
                     var origStr = tr.getValue();
                     var formattedStr = "";
-                    switch (wf.getDisplayFormat()) {
-                        case BINARY:
-                            formattedStr = origStr;
-                            break;
-                        case HEXADECIMAL:
-                            formattedStr = WavevizUtilities.convertVerilogBinaryToHex(origStr);
-                            break;
-                    }
+                    IRubyObject[] args = new IRubyObject[]{RubyString.newString(runtime, origStr)};
+                    formattedStr = formatterProc.call(runtime.getCurrentContext(), args).asJavaString();
+
                     var trimmedStr = WavevizUtilities.getTextWithinWidth(metrics, formattedStr, "..", rightX - x - WavevizSettings.WAVE_LABEL_RIGHT_PADDING * 2);
                     if (!trimmedStr.isEmpty())
                         g2.drawString(trimmedStr, x + WavevizSettings.WAVE_LABEL_RIGHT_PADDING, y + WavevizSettings.WAVE_Y_PADDING + WavevizSettings.WAVE_FONT_HEIGHT);
@@ -355,10 +347,8 @@ public class WaveformPanel extends JPanel implements Scrollable, MouseMotionList
         int index = (int) (popupPosition.getY() / WavevizSettings.WAVE_ROW_HEIGHT);
         if (e.getActionCommand().equals("wave-remove")) {
             model.removeWaveform(index);
-        } else if (e.getActionCommand().equals("wave-set-binary-display-format")) {
-            model.getWaveform(index).setDisplayFormat(Waveform.DisplayFormat.BINARY);
-        } else if (e.getActionCommand().equals("wave-set-hexadecimal-display-format")) {
-            model.getWaveform(index).setDisplayFormat(Waveform.DisplayFormat.HEXADECIMAL);
+        } else if (e.getActionCommand().equals("wave-set-display-format")) {
+            model.getWaveform(index).setDisplayFormat(((JRadioButtonMenuItem) e.getSource()).getText());
         }
     }
 
@@ -377,6 +367,12 @@ public class WaveformPanel extends JPanel implements Scrollable, MouseMotionList
     }
 
     private class PopupListener extends MouseAdapter {
+        private final WaveformPanel panel;
+
+        public PopupListener(WaveformPanel panel) {
+            this.panel = panel;
+        }
+
         @Override
         public void mousePressed(MouseEvent e) {
             showPopup(e);
@@ -391,7 +387,20 @@ public class WaveformPanel extends JPanel implements Scrollable, MouseMotionList
             if (e.isPopupTrigger()) {
                 popupPosition = e.getPoint();
                 var index = (int) popupPosition.getY() / WavevizSettings.WAVE_ROW_HEIGHT;
-                displayFormatMenuMap.get(model.getWaveform(index).getDisplayFormat()).setSelected(true);
+                String displayFormat = model.getWaveform(index).getDisplayFormat();
+
+                displayFormatMenu.removeAll();
+                var displayFormatButtonGroup = new ButtonGroup();
+                for (var name : wavevizObject.getFormatters().keySet()) {
+                    var menuItem = new JRadioButtonMenuItem(name);
+                    menuItem.setActionCommand("wave-set-display-format");
+                    menuItem.addActionListener(panel);
+                    displayFormatButtonGroup.add(menuItem);
+                    if (displayFormat.equals(name))
+                        menuItem.setSelected(true);
+                    displayFormatMenu.add(menuItem);
+                }
+
                 popupMenu.show(e.getComponent(), e.getX(), e.getY());
             }
         }

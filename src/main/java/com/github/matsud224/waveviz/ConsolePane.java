@@ -9,7 +9,6 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.io.*;
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.ListIterator;
 
@@ -22,19 +21,12 @@ public class ConsolePane extends JPanel {
     private final LinkedList<String> lineHistory = new LinkedList<>();
     private ListIterator<String> historyFetchIter;
 
-    private DecoderManager decoderManager = new DecoderManager();
+    private Waveviz wavevizObject;
 
-    public class DecoderManager {
-        private ArrayList<String> decoders = new ArrayList<>();
-
-        public void registerDecoder(String name) {
-            decoders.add(name);
-            System.out.printf("Decoder \"%s\" is registered.\n", name);
-        }
-    }
-
-    public ConsolePane(WaveViewModel model) throws IOException {
+    public ConsolePane(WaveViewModel model, Waveviz wavevizObject) throws IOException {
         super(new BorderLayout());
+
+        this.wavevizObject = wavevizObject;
 
         container = new ScriptingContainer(LocalVariableBehavior.PERSISTENT);
 
@@ -69,7 +61,7 @@ public class ConsolePane extends JPanel {
         // Initialize JRuby (to make startup time appear shorter)
         try {
             container.put("Model", model);
-            container.put("Decoders", decoderManager);
+            container.put("Waveviz", wavevizObject);
             container.runScriptlet("puts \"*** waveviz Ruby console ***\"");
         } catch (Exception ignored) {
         }

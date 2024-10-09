@@ -9,12 +9,14 @@ public class WaveViewPane extends JPanel {
     private final WaveformPanel waveformPanel;
     private final WaveInfoPanel waveInfoPanel;
     private final TimeBar timeBar;
+    private final Waveviz wavevizObject;
     private WaveViewModel model;
 
-    public WaveViewPane(WaveViewModel model) {
+    public WaveViewPane(WaveViewModel model, Waveviz wavevizObject) {
         super(new BorderLayout());
+        this.wavevizObject = wavevizObject;
 
-        waveformPanel = new WaveformPanel(model);
+        waveformPanel = new WaveformPanel(model, wavevizObject);
         var waveScrollPane = new JScrollPane(waveformPanel);
         waveScrollPane.getViewport().setBackground(WavevizSettings.WAVE_BACKGROUND_COLOR);
         waveScrollPane.getViewport().setScrollMode(JViewport.SIMPLE_SCROLL_MODE);

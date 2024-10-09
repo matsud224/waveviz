@@ -24,6 +24,7 @@ public class RootFrame extends JFrame implements ActionListener, WindowListener 
     private final WaveViewModel waveViewModel;
     private final PaneManager paneManager;
     private ParseResult parseResult;
+    private final Waveviz wavevizObject;
 
     RootFrame() {
         setBounds(10, 10, 900, 600);
@@ -31,11 +32,12 @@ public class RootFrame extends JFrame implements ActionListener, WindowListener 
         addWindowListener(this);
 
         waveViewModel = new WaveViewModel();
+        wavevizObject = new Waveviz();
 
         // Create dockable frames
         CControl control = new CControl(this);
         this.getContentPane().add(control.getContentArea());
-        paneManager = new PaneManager(control, waveViewModel);
+        paneManager = new PaneManager(control, waveViewModel, wavevizObject);
         paneManager.getWorkingArea().setVisible(true);
 
         try {

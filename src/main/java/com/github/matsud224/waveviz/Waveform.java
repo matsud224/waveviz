@@ -6,18 +6,14 @@ import java.beans.PropertyChangeSupport;
 public class Waveform {
     private final Signal signal;
     private boolean isShowFullPath = false;
-    private DisplayFormat displayFormat = DisplayFormat.HEXADECIMAL;
+    private String displayFormat = "Binary";
     private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
 
-    public enum DisplayFormat {
-        BINARY, HEXADECIMAL,
-    }
-
-    public DisplayFormat getDisplayFormat() {
+    public String getDisplayFormat() {
         return displayFormat;
     }
 
-    public void setDisplayFormat(DisplayFormat displayFormat) {
+    public void setDisplayFormat(String displayFormat) {
         this.displayFormat = displayFormat;
         this.pcs.firePropertyChange(WaveViewModel.WAVEFORM_PROPERTY, null, null);
     }
