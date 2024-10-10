@@ -1,5 +1,10 @@
 package com.github.matsud224.waveviz;
 
+import org.jruby.Ruby;
+import org.jruby.RubyProc;
+import org.jruby.RubyString;
+import org.jruby.runtime.builtin.IRubyObject;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
@@ -8,6 +13,7 @@ import java.beans.PropertyChangeListener;
 import java.util.Optional;
 
 public class WaveInfoPanel extends JPanel implements Scrollable, MouseMotionListener, MouseListener, ActionListener, PropertyChangeListener {
+    private final Waveviz wavevizObject;
     private WaveViewModel model;
     private JPopupMenu popupMenu;
     private JCheckBoxMenuItem showFullPathMenuItem;
@@ -15,7 +21,8 @@ public class WaveInfoPanel extends JPanel implements Scrollable, MouseMotionList
     private Optional<Integer> dragTargetIndex = Optional.empty();
     private int dragToIndex;
 
-    public WaveInfoPanel(WaveViewModel model) {
+    public WaveInfoPanel(WaveViewModel model, Waveviz wavevizObject) {
+        this.wavevizObject = wavevizObject;
         setModel(model);
         addMouseMotionListener(this);
         addMouseListener(this);
@@ -64,7 +71,12 @@ public class WaveInfoPanel extends JPanel implements Scrollable, MouseMotionList
 
             String valueStr = signal.getValueChangeStore().getValue(model.getCursor().getTime()).getValue();
 
-            String str = String.format("%s (%s)", waveName, valueStr);
+            RubyProc formatterProc = wavevizObject.getFormatters().get(wf.getDisplayFormat());
+            Ruby runtime = formatterProc.getRuntime();
+            IRubyObject[] args = new IRubyObject[]{RubyString.newString(runtime, valueStr)};
+            String formattedStr = formatterProc.call(runtime.getCurrentContext(), args).asJavaString();
+
+            String str = String.format("%s = %s", waveName, formattedStr);
             g2.drawString(str, 10, nowY);
             nowY += WavevizSettings.WAVE_ROW_HEIGHT;
         }
