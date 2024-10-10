@@ -381,12 +381,14 @@ public class WaveformPanel extends JPanel implements Scrollable, MouseMotionList
             if (e.isPopupTrigger()) {
                 popupPosition = e.getPoint();
                 var index = (int) popupPosition.getY() / WavevizSettings.WAVE_ROW_HEIGHT;
-                String displayFormat = model.getWaveform(index).getDisplayFormat();
+                if (index < model.getWaveformCount()) {
+                    String displayFormat = model.getWaveform(index).getDisplayFormat();
 
-                displayFormatMenu.removeAll();
-                WaveViewPane.createDisplayFormatMenu(wavevizObject, displayFormatMenu, WaveformPanel.this, displayFormat);
+                    displayFormatMenu.removeAll();
+                    WaveViewPane.createDisplayFormatMenu(wavevizObject, displayFormatMenu, WaveformPanel.this, displayFormat);
 
-                popupMenu.show(e.getComponent(), e.getX(), e.getY());
+                    popupMenu.show(e.getComponent(), e.getX(), e.getY());
+                }
             }
         }
     }
