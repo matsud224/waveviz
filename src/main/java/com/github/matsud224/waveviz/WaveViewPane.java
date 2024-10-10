@@ -2,6 +2,7 @@ package com.github.matsud224.waveviz;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 
@@ -142,5 +143,18 @@ public class WaveViewPane extends JPanel {
 
     public void scrollToCursor() {
         scrollToTime(model.getCursor().getTime());
+    }
+
+    public static void createDisplayFormatMenu(Waveviz wavevizObject, JMenu menu, ActionListener listener, String selectedFormat) {
+        var displayFormatButtonGroup = new ButtonGroup();
+        for (var name : wavevizObject.getFormatters().keySet()) {
+            var menuItem = new JRadioButtonMenuItem(name);
+            menuItem.setActionCommand("wave-set-display-format");
+            menuItem.addActionListener(listener);
+            displayFormatButtonGroup.add(menuItem);
+            if (selectedFormat.equals(name))
+                menuItem.setSelected(true);
+            menu.add(menuItem);
+        }
     }
 }

@@ -20,6 +20,7 @@ public class WaveInfoPanel extends JPanel implements Scrollable, MouseMotionList
     private Point popupPosition;
     private Optional<Integer> dragTargetIndex = Optional.empty();
     private int dragToIndex;
+    private JMenu displayFormatMenu;
 
     public WaveInfoPanel(WaveViewModel model, Waveviz wavevizObject) {
         this.wavevizObject = wavevizObject;
@@ -39,6 +40,9 @@ public class WaveInfoPanel extends JPanel implements Scrollable, MouseMotionList
         showFullPathMenuItem.setActionCommand("wave-show-full-path");
         showFullPathMenuItem.addActionListener(this);
         popupMenu.add(showFullPathMenuItem);
+
+        this.displayFormatMenu = new JMenu("Display Format");
+        popupMenu.add(displayFormatMenu);
 
         MouseListener popupListener = new PopupListener();
         addMouseListener(popupListener);
@@ -220,6 +224,8 @@ public class WaveInfoPanel extends JPanel implements Scrollable, MouseMotionList
         } else if (e.getActionCommand().equals("wave-show-full-path")) {
             var wf = model.getWaveform(index);
             wf.setIsShowFullPath(!wf.getIsShowFullPath());
+        } else if (e.getActionCommand().equals("wave-set-display-format")) {
+            model.getWaveform(index).setDisplayFormat(((JRadioButtonMenuItem) e.getSource()).getText());
         }
     }
 
@@ -244,6 +250,11 @@ public class WaveInfoPanel extends JPanel implements Scrollable, MouseMotionList
                 int index = e.getY() / WavevizSettings.WAVE_ROW_HEIGHT;
                 showFullPathMenuItem.setSelected(model.getWaveform(index).getIsShowFullPath());
                 popupPosition = e.getPoint();
+                String displayFormat = model.getWaveform(index).getDisplayFormat();
+
+                displayFormatMenu.removeAll();
+                WaveViewPane.createDisplayFormatMenu(wavevizObject, displayFormatMenu, WaveInfoPanel.this, displayFormat);
+
                 popupMenu.show(e.getComponent(), e.getX(), e.getY());
             }
         }

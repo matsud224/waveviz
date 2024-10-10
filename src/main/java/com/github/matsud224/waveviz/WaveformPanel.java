@@ -40,7 +40,7 @@ public class WaveformPanel extends JPanel implements Scrollable, MouseMotionList
         this.displayFormatMenu = new JMenu("Display Format");
         popupMenu.add(displayFormatMenu);
 
-        MouseListener popupListener = new PopupListener(this);
+        MouseListener popupListener = new PopupListener();
         addMouseListener(popupListener);
     }
 
@@ -367,12 +367,6 @@ public class WaveformPanel extends JPanel implements Scrollable, MouseMotionList
     }
 
     private class PopupListener extends MouseAdapter {
-        private final WaveformPanel panel;
-
-        public PopupListener(WaveformPanel panel) {
-            this.panel = panel;
-        }
-
         @Override
         public void mousePressed(MouseEvent e) {
             showPopup(e);
@@ -390,16 +384,7 @@ public class WaveformPanel extends JPanel implements Scrollable, MouseMotionList
                 String displayFormat = model.getWaveform(index).getDisplayFormat();
 
                 displayFormatMenu.removeAll();
-                var displayFormatButtonGroup = new ButtonGroup();
-                for (var name : wavevizObject.getFormatters().keySet()) {
-                    var menuItem = new JRadioButtonMenuItem(name);
-                    menuItem.setActionCommand("wave-set-display-format");
-                    menuItem.addActionListener(panel);
-                    displayFormatButtonGroup.add(menuItem);
-                    if (displayFormat.equals(name))
-                        menuItem.setSelected(true);
-                    displayFormatMenu.add(menuItem);
-                }
+                WaveViewPane.createDisplayFormatMenu(wavevizObject, displayFormatMenu, WaveformPanel.this, displayFormat);
 
                 popupMenu.show(e.getComponent(), e.getX(), e.getY());
             }
