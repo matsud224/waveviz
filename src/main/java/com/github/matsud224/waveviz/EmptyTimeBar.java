@@ -2,9 +2,14 @@ package com.github.matsud224.waveviz;
 
 import javax.swing.*;
 import java.awt.*;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 
-public class EmptyTimeBar extends JComponent {
-    public EmptyTimeBar() {
+public class EmptyTimeBar extends JComponent implements PropertyChangeListener {
+    private Waveviz wavevizObject;
+
+    public EmptyTimeBar(Waveviz wavevizObject) {
+        this.wavevizObject = wavevizObject;
         setPreferredSize(new Dimension(10000, WavevizSettings.TIMEBAR_HEIGHT));
     }
 
@@ -13,7 +18,11 @@ public class EmptyTimeBar extends JComponent {
         var g2 = (Graphics2D) g;
         var clipBounds = g.getClipBounds();
 
-        g2.setColor(WavevizSettings.WAVE_BACKGROUND_COLOR);
+        g2.setColor(wavevizObject.getWaveBackgroundColor());
         g2.fillRect(clipBounds.x, clipBounds.y, clipBounds.width, clipBounds.height);
+    }
+
+    public void propertyChange(PropertyChangeEvent propertyChangeEvent) {
+        repaint();
     }
 }

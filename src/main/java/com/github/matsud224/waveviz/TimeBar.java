@@ -6,11 +6,13 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
 public class TimeBar extends JComponent implements ScaleChangeListener, PropertyChangeListener {
+    private final Waveviz wavevizObject;
     private int increment;
     private int pixelsPerUnitTime = 2;
     private WaveViewModel model;
 
-    public TimeBar(WaveViewModel model, int increment) {
+    public TimeBar(WaveViewModel model, Waveviz wavevizObject, int increment) {
+        this.wavevizObject = wavevizObject;
         setModel(model);
         this.increment = increment;
 
@@ -81,7 +83,7 @@ public class TimeBar extends JComponent implements ScaleChangeListener, Property
 
         var clipBounds = g.getClipBounds();
 
-        g2.setColor(WavevizSettings.WAVE_BACKGROUND_COLOR);
+        g2.setColor(wavevizObject.getWaveBackgroundColor());
         g2.fillRect(clipBounds.x, clipBounds.y, clipBounds.width, clipBounds.height);
 
         if (model.getTimescale() == null)

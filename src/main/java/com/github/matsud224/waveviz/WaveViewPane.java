@@ -5,12 +5,17 @@ import java.awt.*;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 
-public class WaveViewPane extends JPanel {
+public class WaveViewPane extends JPanel implements PropertyChangeListener {
     private final WaveformPanel waveformPanel;
     private final WaveInfoPanel waveInfoPanel;
+    private final EmptyTimeBar emptyTimeBar;
     private final TimeBar timeBar;
     private final Waveviz wavevizObject;
+    private final JScrollPane waveScrollPane;
+    private final JScrollPane waveInfoScrollPane;
     private WaveViewModel model;
 
     public WaveViewPane(WaveViewModel model, Waveviz wavevizObject) {
@@ -18,8 +23,8 @@ public class WaveViewPane extends JPanel {
         this.wavevizObject = wavevizObject;
 
         waveformPanel = new WaveformPanel(model, wavevizObject);
-        var waveScrollPane = new JScrollPane(waveformPanel);
-        waveScrollPane.getViewport().setBackground(WavevizSettings.WAVE_BACKGROUND_COLOR);
+        waveScrollPane = new JScrollPane(waveformPanel);
+        waveScrollPane.getViewport().setBackground(wavevizObject.getWaveBackgroundColor());
         waveScrollPane.getViewport().setScrollMode(JViewport.SIMPLE_SCROLL_MODE);
         waveScrollPane.addMouseListener(new MouseListener() {
             @Override
@@ -48,12 +53,12 @@ public class WaveViewPane extends JPanel {
             }
         });
 
-        timeBar = new TimeBar(model, 40);
+        timeBar = new TimeBar(model, wavevizObject, 40);
         waveScrollPane.setColumnHeaderView(timeBar);
 
         waveInfoPanel = new WaveInfoPanel(model, wavevizObject);
-        var waveInfoScrollPane = new JScrollPane(waveInfoPanel);
-        waveInfoScrollPane.getViewport().setBackground(WavevizSettings.WAVE_BACKGROUND_COLOR);
+        waveInfoScrollPane = new JScrollPane(waveInfoPanel);
+        waveInfoScrollPane.getViewport().setBackground(wavevizObject.getWaveBackgroundColor());
         waveInfoScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
         waveInfoScrollPane.addMouseListener(new MouseListener() {
             @Override
@@ -81,7 +86,7 @@ public class WaveViewPane extends JPanel {
 
             }
         });
-        var emptyTimeBar = new EmptyTimeBar();
+        emptyTimeBar = new EmptyTimeBar(wavevizObject);
         waveInfoScrollPane.setColumnHeaderView(emptyTimeBar);
 
         waveScrollPane.getVerticalScrollBar().addAdjustmentListener(e -> {
@@ -156,5 +161,17 @@ public class WaveViewPane extends JPanel {
                 menuItem.setSelected(true);
             menu.add(menuItem);
         }
+    }
+
+    @Override
+    public void propertyChange(PropertyChangeEvent evt) {
+        emptyTimeBar.propertyChange(evt);
+        timeBar.propertyChange(evt);
+        waveformPanel.propertyChange(evt);
+        waveInfoPanel.propertyChange(evt);
+
+        // FIXME
+        waveScrollPane.getViewport().setBackground(wavevizObject.getWaveBackgroundColor());
+        waveInfoScrollPane.getViewport().setBackground(wavevizObject.getWaveBackgroundColor());
     }
 }

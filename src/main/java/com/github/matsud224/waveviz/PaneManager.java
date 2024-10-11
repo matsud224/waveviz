@@ -31,6 +31,8 @@ public class PaneManager {
             throw new RuntimeException(e);
         }
 
+        wavevizObject.addPropertyChangeListener(waveViewPane);
+
         DefaultSingleCDockable signalFinderDockable = createDockable("Signal Finder", true, signalFinderPane);
         control.addDockable(signalFinderDockable);
         signalFinderDockable.setLocation(CLocation.base().normalWest(0.25));

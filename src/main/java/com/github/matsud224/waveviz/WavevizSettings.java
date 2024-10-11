@@ -3,7 +3,6 @@ package com.github.matsud224.waveviz;
 import java.awt.*;
 
 public class WavevizSettings {
-    public static final Color WAVE_BACKGROUND_COLOR = Color.black;
     public static final Color WAVE_FOCUSED_BACKGROUND_COLOR = Color.gray;
     public static final Color WAVE_SELECTED_BACKGROUND_COLOR = Color.blue;
     public static final Color WAVE_ROW_SEPARATOR_COLOR = Color.white;

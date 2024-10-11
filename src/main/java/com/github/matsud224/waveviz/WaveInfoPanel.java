@@ -49,7 +49,7 @@ public class WaveInfoPanel extends JPanel implements Scrollable, MouseMotionList
     }
 
     private void paintBackground(Graphics2D g2) {
-        g2.setColor(WavevizSettings.WAVE_BACKGROUND_COLOR);
+        g2.setColor(wavevizObject.getWaveBackgroundColor());
         var r = g2.getClipBounds();
         g2.fillRect(r.x, r.y, r.width, r.height);
 
