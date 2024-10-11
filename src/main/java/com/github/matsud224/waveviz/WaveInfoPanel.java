@@ -75,13 +75,15 @@ public class WaveInfoPanel extends JPanel implements Scrollable, MouseMotionList
 
             String valueStr = signal.getValueChangeStore().getValue(model.getCursor().getTime()).getValue();
 
-            RubyProc formatterProc = wavevizObject.getFormatters().get(wf.getDisplayFormat());
-            Ruby runtime = formatterProc.getRuntime();
-            IRubyObject[] args = new IRubyObject[]{RubyString.newString(runtime, valueStr)};
-            String formattedStr = formatterProc.call(runtime.getCurrentContext(), args).asJavaString();
+            if (valueStr != null) {
+                RubyProc formatterProc = wavevizObject.getFormatters().get(wf.getDisplayFormat());
+                Ruby runtime = formatterProc.getRuntime();
+                IRubyObject[] args = new IRubyObject[]{RubyString.newString(runtime, valueStr)};
+                String formattedStr = formatterProc.call(runtime.getCurrentContext(), args).asJavaString();
 
-            String str = String.format("%s = %s", waveName, formattedStr);
-            g2.drawString(str, 10, nowY);
+                String str = String.format("%s = %s", waveName, formattedStr);
+                g2.drawString(str, 10, nowY);
+            }
             nowY += WavevizSettings.WAVE_ROW_HEIGHT;
         }
     }

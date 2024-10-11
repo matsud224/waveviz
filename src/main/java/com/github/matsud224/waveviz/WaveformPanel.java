@@ -169,16 +169,20 @@ public class WaveformPanel extends JPanel implements Scrollable, MouseMotionList
                     g2.drawLine(rightX, upperY, rightX, lowerY);
                     g2.drawLine(x, lowerY, rightX, lowerY);
 
-                    g2.setColor(WavevizSettings.WAVE_TEXT_COLOR);
-                    var metrics = g2.getFontMetrics();
-                    var origStr = tr.getValue();
-                    var formattedStr = "";
-                    IRubyObject[] args = new IRubyObject[]{RubyString.newString(runtime, origStr)};
-                    formattedStr = formatterProc.call(runtime.getCurrentContext(), args).asJavaString();
+                    if (rightX - x > 10 /* FIXME: calc threshold */) { // skip drawing text if width is too small
+                        g2.setColor(WavevizSettings.WAVE_TEXT_COLOR);
+                        var metrics = g2.getFontMetrics();
+                        var origStr = tr.getValue();
+                        if (origStr != null) {
+                            var formattedStr = "";
+                            IRubyObject[] args = new IRubyObject[]{RubyString.newString(runtime, origStr)};
+                            formattedStr = formatterProc.call(runtime.getCurrentContext(), args).asJavaString();
 
-                    var trimmedStr = WavevizUtilities.getTextWithinWidth(metrics, formattedStr, "..", rightX - x - WavevizSettings.WAVE_LABEL_RIGHT_PADDING * 2);
-                    if (!trimmedStr.isEmpty())
-                        g2.drawString(trimmedStr, x + WavevizSettings.WAVE_LABEL_RIGHT_PADDING, y + WavevizSettings.WAVE_Y_PADDING + WavevizSettings.WAVE_FONT_HEIGHT);
+                            var trimmedStr = WavevizUtilities.getTextWithinWidth(metrics, formattedStr, "..", rightX - x - WavevizSettings.WAVE_LABEL_RIGHT_PADDING * 2);
+                            if (!trimmedStr.isEmpty())
+                                g2.drawString(trimmedStr, x + WavevizSettings.WAVE_LABEL_RIGHT_PADDING, y + WavevizSettings.WAVE_Y_PADDING + WavevizSettings.WAVE_FONT_HEIGHT);
+                        }
+                    }
                 }
 
                 if (pixelsPerUnitTime > 0) {
