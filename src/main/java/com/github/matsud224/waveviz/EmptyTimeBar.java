@@ -10,7 +10,7 @@ public class EmptyTimeBar extends JComponent implements PropertyChangeListener {
 
     public EmptyTimeBar(Waveviz wavevizObject) {
         this.wavevizObject = wavevizObject;
-        setPreferredSize(new Dimension(10000, WavevizSettings.TIMEBAR_HEIGHT));
+        setPreferredSize(new Dimension(10000, wavevizObject.getTimebarHeight()));
     }
 
     @Override

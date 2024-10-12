@@ -50,12 +50,12 @@ public class WaveformPanel extends JPanel implements Scrollable, MouseMotionList
         g2.fillRect(clipBounds.x, clipBounds.y, clipBounds.width, clipBounds.height);
 
         if (model.getFocusedIndex().isPresent()) {
-            g2.setColor(WavevizSettings.WAVE_FOCUSED_BACKGROUND_COLOR);
-            g2.fillRect(clipBounds.x, WavevizSettings.WAVE_ROW_HEIGHT * model.getFocusedIndex().get(), clipBounds.width, WavevizSettings.WAVE_ROW_HEIGHT);
+            g2.setColor(wavevizObject.getWaveFocusedBackgroundColor());
+            g2.fillRect(clipBounds.x, wavevizObject.getWaveRowHeight() * model.getFocusedIndex().get(), clipBounds.width, wavevizObject.getWaveRowHeight());
         }
         if (model.getSelectedIndex().isPresent()) {
-            g2.setColor(WavevizSettings.WAVE_SELECTED_BACKGROUND_COLOR);
-            g2.fillRect(clipBounds.x, WavevizSettings.WAVE_ROW_HEIGHT * model.getSelectedIndex().get(), clipBounds.width, WavevizSettings.WAVE_ROW_HEIGHT);
+            g2.setColor(wavevizObject.getWaveSelectedBackgroundColor());
+            g2.fillRect(clipBounds.x, wavevizObject.getWaveRowHeight() * model.getSelectedIndex().get(), clipBounds.width, wavevizObject.getWaveRowHeight());
         }
     }
 
@@ -118,13 +118,13 @@ public class WaveformPanel extends JPanel implements Scrollable, MouseMotionList
 
     private void paintWaves(Graphics2D g2) {
         var clipBounds = g2.getClipBounds();
-        int startIndex = clipBounds.y / WavevizSettings.WAVE_ROW_HEIGHT;
-        for (int i = startIndex, y = startIndex * WavevizSettings.WAVE_ROW_HEIGHT;
+        int startIndex = clipBounds.y / wavevizObject.getWaveRowHeight();
+        for (int i = startIndex, y = startIndex * wavevizObject.getWaveRowHeight();
              i < model.getWaveformCount() && y < clipBounds.y + clipBounds.height;
-             i++, y += WavevizSettings.WAVE_ROW_HEIGHT) {
+             i++, y += wavevizObject.getWaveRowHeight()) {
 
-            int upperY = y + WavevizSettings.WAVE_Y_PADDING;
-            int lowerY = y + WavevizSettings.WAVE_ROW_HEIGHT - WavevizSettings.WAVE_Y_PADDING;
+            int upperY = y + wavevizObject.getWaveYPadding();
+            int lowerY = y + wavevizObject.getWaveRowHeight() - wavevizObject.getWaveYPadding();
 
             var wf = model.getWaveform(i);
             var signal = wf.getSignal();
@@ -143,15 +143,15 @@ public class WaveformPanel extends JPanel implements Scrollable, MouseMotionList
                 int rightX = x + pixelsOfTimeSpan(tr.getEndTime() - t + 1);
                 if (signal.getSize() == 1) {
                     if (tr.getValue().equals("0")) {
-                        g2.setColor(WavevizSettings.WAVE_LINE_COLOR);
+                        g2.setColor(wavevizObject.getWaveLineColor());
                         g2.drawLine(x, lowerY, rightX, lowerY);
                         if (prevValue != null && prevValue.equals("1")) {
                             g2.drawLine(x, upperY, x, lowerY);
                         }
                     } else if (tr.getValue().equals("1")) {
-                        g2.setColor(WavevizSettings.WAVE_HIGH_VALUE_FILL_COLOR);
+                        g2.setColor(wavevizObject.getWaveHighValueFillColor());
                         g2.fillRect(x, upperY, rightX - x, lowerY - upperY);
-                        g2.setColor(WavevizSettings.WAVE_LINE_COLOR);
+                        g2.setColor(wavevizObject.getWaveLineColor());
                         g2.drawLine(x, upperY, rightX, upperY);
                         if (prevValue != null && prevValue.equals("0")) {
                             g2.drawLine(x, upperY, x, lowerY);
@@ -161,16 +161,16 @@ public class WaveformPanel extends JPanel implements Scrollable, MouseMotionList
                             g2.setColor(Color.red);
                         else
                             g2.setColor(Color.yellow);
-                        g2.drawLine(x, y + WavevizSettings.WAVE_ROW_HEIGHT / 2, rightX, y + WavevizSettings.WAVE_ROW_HEIGHT / 2);
+                        g2.drawLine(x, y + wavevizObject.getWaveRowHeight() / 2, rightX, y + wavevizObject.getWaveRowHeight() / 2);
                     }
                 } else {
-                    g2.setColor(WavevizSettings.WAVE_LINE_COLOR);
+                    g2.setColor(wavevizObject.getWaveLineColor());
                     g2.drawLine(x, upperY, rightX, upperY);
                     g2.drawLine(rightX, upperY, rightX, lowerY);
                     g2.drawLine(x, lowerY, rightX, lowerY);
 
                     if (rightX - x > 10 /* FIXME: calc threshold */) { // skip drawing text if width is too small
-                        g2.setColor(WavevizSettings.WAVE_TEXT_COLOR);
+                        g2.setColor(wavevizObject.getWaveTextColor());
                         var metrics = g2.getFontMetrics();
                         var origStr = tr.getValue();
                         if (origStr != null) {
@@ -178,9 +178,9 @@ public class WaveformPanel extends JPanel implements Scrollable, MouseMotionList
                             IRubyObject[] args = new IRubyObject[]{RubyString.newString(runtime, origStr)};
                             formattedStr = formatterProc.call(runtime.getCurrentContext(), args).asJavaString();
 
-                            var trimmedStr = WavevizUtilities.getTextWithinWidth(metrics, formattedStr, "..", rightX - x - WavevizSettings.WAVE_LABEL_RIGHT_PADDING * 2);
+                            var trimmedStr = WavevizUtilities.getTextWithinWidth(metrics, formattedStr, "..", rightX - x - wavevizObject.getWaveLabelRightPadding() * 2);
                             if (!trimmedStr.isEmpty())
-                                g2.drawString(trimmedStr, x + WavevizSettings.WAVE_LABEL_RIGHT_PADDING, y + WavevizSettings.WAVE_Y_PADDING + WavevizSettings.WAVE_FONT_HEIGHT);
+                                g2.drawString(trimmedStr, x + wavevizObject.getWaveLabelRightPadding(), y + wavevizObject.getWaveYPadding() + wavevizObject.getWaveFontHeight());
                         }
                     }
                 }
@@ -204,7 +204,7 @@ public class WaveformPanel extends JPanel implements Scrollable, MouseMotionList
     protected void paintComponent(Graphics g) {
         Graphics2D g2 = (Graphics2D) g;
 
-        g2.setFont(WavevizSettings.WAVE_MONOSPACE_FONT);
+        g2.setFont(wavevizObject.getWaveMonospaceFont());
         g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
                 RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
 
@@ -214,7 +214,7 @@ public class WaveformPanel extends JPanel implements Scrollable, MouseMotionList
     }
 
     private void update() {
-        var panelSize = new Dimension(getRequiredWidth().orElse(Integer.MAX_VALUE), WavevizSettings.WAVE_ROW_HEIGHT * model.getWaveformCount());
+        var panelSize = new Dimension(getRequiredWidth().orElse(Integer.MAX_VALUE), wavevizObject.getWaveRowHeight() * model.getWaveformCount());
         setPreferredSize(panelSize);
         scaleChangeListeners.forEach(listener -> listener.scaleChanged(pixelsPerUnitTime, panelSize.width));
         revalidate();
@@ -247,7 +247,7 @@ public class WaveformPanel extends JPanel implements Scrollable, MouseMotionList
             else
                 pixelsPerUnitTime /= ZOOM_POWER;
         } else if (pixelsPerUnitTime > 0) {
-            if (pixelsPerUnitTime * ZOOM_POWER <= WavevizSettings.WAVE_MAX_PIXELS_PER_UNIT_TIME)
+            if (pixelsPerUnitTime * ZOOM_POWER <= wavevizObject.getWaveMaxPixelsPerUnitTime())
                 pixelsPerUnitTime *= ZOOM_POWER;
             else
                 result = false;
@@ -260,7 +260,7 @@ public class WaveformPanel extends JPanel implements Scrollable, MouseMotionList
         boolean result = true;
         if (pixelsPerUnitTime < 0) {
             var maxTime = model.getEndTime();
-            if (xCoordinateFromTime(maxTime) > WavevizSettings.WAVE_MIN_WHOLE_WIDTH)
+            if (xCoordinateFromTime(maxTime) > wavevizObject.getWaveMinWholeWidth())
                 pixelsPerUnitTime *= ZOOM_POWER;
             else
                 result = false;
@@ -284,7 +284,7 @@ public class WaveformPanel extends JPanel implements Scrollable, MouseMotionList
         if (orientation == SwingConstants.HORIZONTAL) {
             return Math.max(5, pixelsPerUnitTime);
         } else {
-            return WavevizSettings.WAVE_ROW_HEIGHT;
+            return wavevizObject.getWaveRowHeight();
         }
     }
 
@@ -293,7 +293,7 @@ public class WaveformPanel extends JPanel implements Scrollable, MouseMotionList
         if (orientation == SwingConstants.HORIZONTAL) {
             return Math.max(50, pixelsPerUnitTime * 5);
         } else {
-            return WavevizSettings.WAVE_ROW_HEIGHT * 5;
+            return wavevizObject.getWaveRowHeight() * 5;
         }
     }
 
@@ -348,7 +348,7 @@ public class WaveformPanel extends JPanel implements Scrollable, MouseMotionList
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        int index = (int) (popupPosition.getY() / WavevizSettings.WAVE_ROW_HEIGHT);
+        int index = (int) (popupPosition.getY() / wavevizObject.getWaveRowHeight());
         if (e.getActionCommand().equals("wave-remove")) {
             model.removeWaveform(index);
         } else if (e.getActionCommand().equals("wave-set-display-format")) {
@@ -384,7 +384,7 @@ public class WaveformPanel extends JPanel implements Scrollable, MouseMotionList
         private void showPopup(MouseEvent e) {
             if (e.isPopupTrigger()) {
                 popupPosition = e.getPoint();
-                var index = (int) popupPosition.getY() / WavevizSettings.WAVE_ROW_HEIGHT;
+                var index = (int) popupPosition.getY() / wavevizObject.getWaveRowHeight();
                 if (index < model.getWaveformCount()) {
                     String displayFormat = model.getWaveform(index).getDisplayFormat();
 

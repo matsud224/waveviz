@@ -63,6 +63,9 @@ public class ConsolePane extends JPanel {
             container.put("Model", model);
             container.put("Waveviz", wavevizObject);
             container.runScriptlet("puts \"*** waveviz Ruby console ***\"");
+            container.runScriptlet("require 'java'");
+            container.runScriptlet("java_import java.awt.Color");
+            container.runScriptlet("java_import java.awt.Font");
         } catch (Exception ignored) {
         }
         try {

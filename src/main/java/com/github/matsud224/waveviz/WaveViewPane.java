@@ -163,6 +163,11 @@ public class WaveViewPane extends JPanel implements PropertyChangeListener {
         }
     }
 
+    private void updateSettings() {
+        waveScrollPane.getViewport().setBackground(wavevizObject.getWaveBackgroundColor());
+        waveInfoScrollPane.getViewport().setBackground(wavevizObject.getWaveBackgroundColor());
+    }
+
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
         emptyTimeBar.propertyChange(evt);
@@ -170,8 +175,6 @@ public class WaveViewPane extends JPanel implements PropertyChangeListener {
         waveformPanel.propertyChange(evt);
         waveInfoPanel.propertyChange(evt);
 
-        // FIXME
-        waveScrollPane.getViewport().setBackground(wavevizObject.getWaveBackgroundColor());
-        waveInfoScrollPane.getViewport().setBackground(wavevizObject.getWaveBackgroundColor());
+        updateSettings();
     }
 }

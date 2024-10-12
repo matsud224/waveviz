@@ -16,11 +16,11 @@ public class TimeBar extends JComponent implements ScaleChangeListener, Property
         setModel(model);
         this.increment = increment;
 
-        setPreferredSize(new Dimension(10000, WavevizSettings.TIMEBAR_HEIGHT));
+        setPreferredSize(new Dimension(10000, wavevizObject.getTimebarHeight()));
     }
 
     public void setPreferredWidth(int pw) {
-        setPreferredSize(new Dimension(pw, WavevizSettings.TIMEBAR_HEIGHT));
+        setPreferredSize(new Dimension(pw, wavevizObject.getTimebarHeight()));
     }
 
     public int getIncrement() {
@@ -77,7 +77,7 @@ public class TimeBar extends JComponent implements ScaleChangeListener, Property
     @Override
     protected void paintComponent(Graphics g) {
         var g2 = (Graphics2D) g;
-        g2.setFont(WavevizSettings.WAVE_NORMAL_FONT);
+        g2.setFont(wavevizObject.getWaveNormalFont());
         g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
                 RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
 
@@ -91,8 +91,8 @@ public class TimeBar extends JComponent implements ScaleChangeListener, Property
 
         int startTime = timeFromXCoordinate(clipBounds.x);
 
-        int upperY = WavevizSettings.WAVE_Y_PADDING;
-        int lowerY = WavevizSettings.TIMEBAR_HEIGHT;
+        int upperY = wavevizObject.getWaveYPadding();
+        int lowerY = wavevizObject.getTimebarHeight();
 
         int timeLabelInterval = 100;
         if (pixelsPerUnitTime > 0) {
@@ -109,19 +109,19 @@ public class TimeBar extends JComponent implements ScaleChangeListener, Property
         while (currentX < clipBounds.x + clipBounds.width) {
             int rightX = currentX + pixelsOfTimeSpan(timeLabelInterval);
 
-            g2.setColor(WavevizSettings.WAVE_TEXT_COLOR);
+            g2.setColor(wavevizObject.getWaveTextColor());
             var metrics = g2.getFontMetrics();
-            var labelStr = WavevizUtilities.getTextWithinWidth(metrics, timeToLabel(currentTime), "..", rightX - currentX - WavevizSettings.WAVE_LABEL_RIGHT_PADDING * 2);
-            g2.drawString(labelStr, currentX + WavevizSettings.WAVE_LABEL_RIGHT_PADDING, WavevizSettings.WAVE_Y_PADDING + WavevizSettings.WAVE_FONT_HEIGHT);
+            var labelStr = WavevizUtilities.getTextWithinWidth(metrics, timeToLabel(currentTime), "..", rightX - currentX - wavevizObject.getWaveLabelRightPadding() * 2);
+            g2.drawString(labelStr, currentX + wavevizObject.getWaveLabelRightPadding(), wavevizObject.getWaveYPadding() + wavevizObject.getWaveFontHeight());
 
-            g2.setColor(WavevizSettings.TIMEBAR_LINE_COLOR);
+            g2.setColor(wavevizObject.getTimebarLineColor());
             g2.drawLine(currentX, (lowerY - upperY) / 2, currentX, lowerY);
 
             currentX = rightX;
             currentTime += timeLabelInterval;
         }
 
-        g2.setColor(WavevizSettings.TIMEBAR_LINE_COLOR);
+        g2.setColor(wavevizObject.getTimebarLineColor());
         g2.drawLine(clipBounds.x, lowerY, clipBounds.x + clipBounds.width, lowerY);
     }
 
