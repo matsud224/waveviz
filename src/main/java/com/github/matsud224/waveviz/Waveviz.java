@@ -1,11 +1,16 @@
 package com.github.matsud224.waveviz;
 
+import org.jruby.Ruby;
+import org.jruby.RubyClass;
 import org.jruby.RubyProc;
+import org.jruby.RubyString;
+import org.jruby.runtime.builtin.IRubyObject;
 
 import java.awt.*;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.HashMap;
+import java.util.HashSet;
 
 public class Waveviz {
     private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
@@ -32,6 +37,7 @@ public class Waveviz {
     private Font waveMonospaceFont = new Font("Courier", Font.PLAIN, waveFontHeight - 2);
 
     private HashMap<String, RubyProc> formatters = new HashMap<>();
+    private HashSet<RubyClass> decoders = new HashSet<>();
 
     public static final String WAVEFORM_PROPERTY = "WAVEFORM_PROPERTY";
 
@@ -60,6 +66,21 @@ public class Waveviz {
 
     public HashMap<String, RubyProc> getFormatters() {
         return formatters;
+    }
+
+    public void registerDecoder(RubyClass klass) {
+        Ruby runtime = klass.getRuntime();
+        IRubyObject description = klass.instance_variable_get(runtime.getCurrentContext(), RubyString.newString(runtime, "@description"));
+        if (description.isNil()) {
+            System.out.printf("Invalid decoder.\n");
+        } else {
+            System.out.printf("Decoder \"%s\" is registered.\n", description.asJavaString());
+            decoders.add(klass);
+        }
+    }
+
+    public HashSet<RubyClass> getDecoders() {
+        return decoders;
     }
 
     public Color getWaveFocusedBackgroundColor() {
