@@ -73,7 +73,7 @@ public class WaveInfoPanel extends JPanel implements Scrollable, MouseMotionList
 
             String waveName = wf.getName();
 
-            String valueStr = signal.getValueChangeStore().getValue(model.getCursor().getTime()).getValue();
+            String valueStr = signal.getValue(model.getCursor().getTime()).getValue();
 
             if (valueStr != null) {
                 RubyProc formatterProc = wavevizObject.getFormatters().get(wf.getDisplayFormat());

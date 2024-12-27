@@ -32,7 +32,7 @@ public class RootFrame extends JFrame implements ActionListener, WindowListener 
         addWindowListener(this);
 
         waveViewModel = new WaveViewModel();
-        wavevizObject = new Waveviz();
+        wavevizObject = new Waveviz(waveViewModel);
 
         // Create dockable frames
         CControl control = new CControl(this);
@@ -156,7 +156,7 @@ public class RootFrame extends JFrame implements ActionListener, WindowListener 
                 if (waveViewModel.getSelectedIndex().isPresent()) {
                     Waveform selected = waveViewModel.getWaveform(waveViewModel.getSelectedIndex().get());
                     int time = waveViewModel.getCursor().getTime();
-                    TimeRange tr = selected.getSignal().getValueChangeStore().getValue(Math.max(0, time - 1));
+                    TimeRange tr = selected.getSignal().getValue(Math.max(0, time - 1));
                     waveViewModel.getCursor().setTime(tr.getStartTime());
                     paneManager.getWaveViewPane().scrollToCursor();
                 }
@@ -165,7 +165,7 @@ public class RootFrame extends JFrame implements ActionListener, WindowListener 
                 if (waveViewModel.getSelectedIndex().isPresent()) {
                     Waveform selected = waveViewModel.getWaveform(waveViewModel.getSelectedIndex().get());
                     int time = waveViewModel.getCursor().getTime();
-                    TimeRange tr = selected.getSignal().getValueChangeStore().getValue(time);
+                    TimeRange tr = selected.getSignal().getValue(time);
                     waveViewModel.getCursor().setTime(Math.min(tr.getEndTime() + 1, waveViewModel.getEndTime()));
                     paneManager.getWaveViewPane().scrollToCursor();
                 }

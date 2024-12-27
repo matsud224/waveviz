@@ -1,9 +1,7 @@
 package com.github.matsud224.waveviz;
 
-import org.jruby.Ruby;
-import org.jruby.RubyClass;
-import org.jruby.RubyProc;
-import org.jruby.RubyString;
+import org.jruby.*;
+import org.jruby.runtime.Block;
 import org.jruby.runtime.builtin.IRubyObject;
 
 import java.awt.*;
@@ -14,6 +12,7 @@ import java.util.HashSet;
 
 public class Waveviz {
     private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
+    private final WaveViewModel waveViewModel;
 
     private Color waveBackgroundColor = Color.black;
     private Color waveFocusedBackgroundColor = Color.gray;
@@ -40,6 +39,10 @@ public class Waveviz {
     private HashSet<RubyClass> decoders = new HashSet<>();
 
     public static final String WAVEFORM_PROPERTY = "WAVEFORM_PROPERTY";
+
+    public Waveviz(WaveViewModel waveViewModel) {
+        this.waveViewModel = waveViewModel;
+    }
 
     public void addPropertyChangeListener(PropertyChangeListener listener) {
         this.pcs.addPropertyChangeListener(listener);
@@ -77,6 +80,29 @@ public class Waveviz {
             System.out.printf("Decoder \"%s\" is registered.\n", description.asJavaString());
             decoders.add(klass);
         }
+    }
+
+    public boolean decode(RubySymbol decoderSymbol, RubyHash waveHash) {
+        var decoderClassOpt = decoders.stream().filter(klass -> {
+            IRubyObject symbol = klass.getInstanceVariable("@decoder_symbol");
+            return symbol.eql(decoderSymbol);
+        }).findFirst();
+
+        if (decoderClassOpt.isEmpty()) {
+            return false;
+        }
+
+        var decoderClass = decoderClassOpt.get();
+        var ctx = decoderClass.getRuntime().getCurrentContext();
+        var decoder = decoderClass.newInstance(ctx, Block.NULL_BLOCK);
+        try {
+            decoder.callMethod(ctx, "setup", waveHash);
+            decoder.callMethod(ctx, "decode", waveHash);
+        } catch (RuntimeException e) {
+            System.out.println("Decode failed.");
+        }
+
+        return true;
     }
 
     public HashSet<RubyClass> getDecoders() {
@@ -225,5 +251,9 @@ public class Waveviz {
     public void setWaveMonospaceFont(Font waveMonospaceFont) {
         this.waveMonospaceFont = waveMonospaceFont;
         this.pcs.firePropertyChange(WAVEFORM_PROPERTY, null, null);
+    }
+
+    public Signal waveAt(int index) {
+        return waveViewModel.getWaveform(index).getSignal();
     }
 }
