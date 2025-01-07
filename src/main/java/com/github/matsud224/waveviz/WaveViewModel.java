@@ -94,11 +94,11 @@ public class WaveViewModel implements PropertyChangeListener {
     }
 
     public int getStartTime() {
-        return waveforms.stream().map(wf -> wf.getSignal().getStartTime()).min(Comparator.naturalOrder()).orElse(0);
+        return waveforms.stream().map(wf -> wf.getTimeSeries().getStartTime()).min(Comparator.naturalOrder()).orElse(0);
     }
 
     public int getEndTime() {
-        return waveforms.stream().map(wf -> wf.getSignal().getEndTime()).max(Comparator.naturalOrder()).orElse(0);
+        return waveforms.stream().map(wf -> wf.getTimeSeries().getEndTime()).max(Comparator.naturalOrder()).orElse(0);
     }
 
     public ArrayList<Marker> getMarkers() {

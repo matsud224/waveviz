@@ -7,11 +7,7 @@ public interface TimeSeries {
 
     String getType();
 
-    int getWidth();
-
-    void addChange(int time, String numStr);
-
-    TimeRange getValue(int time);
+    ArrayList<TimeSpan> getValue(int time);
 
     int getStartTime();
 

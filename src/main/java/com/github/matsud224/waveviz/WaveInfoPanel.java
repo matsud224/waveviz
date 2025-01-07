@@ -69,11 +69,11 @@ public class WaveInfoPanel extends JPanel implements Scrollable, MouseMotionList
         g2.setColor(Color.white);
         for (int i = 0; i < model.getWaveformCount(); i++) {
             Waveform wf = model.getWaveform(i);
-            Signal signal = wf.getSignal();
+            TimeSeries timeSeries = wf.getTimeSeries();
 
             String waveName = wf.getName();
 
-            String valueStr = signal.getValue(model.getCursor().getTime()).getValue();
+            String valueStr = timeSeries.getValue(model.getCursor().getTime()).getValue();
 
             if (valueStr != null) {
                 RubyProc formatterProc = wavevizObject.getFormatters().get(wf.getDisplayFormat());

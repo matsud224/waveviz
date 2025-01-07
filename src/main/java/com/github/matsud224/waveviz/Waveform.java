@@ -4,7 +4,7 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 
 public class Waveform {
-    private final Signal signal;
+    private final TimeSeries timeSeries;
     private boolean isShowFullPath = false;
     private String displayFormat = "Binary";
     private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
@@ -18,8 +18,8 @@ public class Waveform {
         this.pcs.firePropertyChange(WaveViewModel.WAVEFORM_PROPERTY, null, null);
     }
 
-    public Waveform(Signal signal) {
-        this.signal = signal;
+    public Waveform(TimeSeries timeSeries) {
+        this.timeSeries = timeSeries;
     }
 
     public void addPropertyChangeListener(PropertyChangeListener listener) {
@@ -30,8 +30,8 @@ public class Waveform {
         this.pcs.removePropertyChangeListener(listener);
     }
 
-    public Signal getSignal() {
-        return signal;
+    public TimeSeries getTimeSeries() {
+        return timeSeries;
     }
 
     public boolean getIsShowFullPath() {
@@ -44,7 +44,7 @@ public class Waveform {
     }
 
     public String getName() {
-        var path = signal.getPath();
+        var path = timeSeries.getPath();
         return getIsShowFullPath() ? String.join(".", path) : path.get(path.size() - 1);
     }
 }

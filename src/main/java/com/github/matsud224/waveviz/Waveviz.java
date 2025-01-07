@@ -253,7 +253,7 @@ public class Waveviz {
         this.pcs.firePropertyChange(WAVEFORM_PROPERTY, null, null);
     }
 
-    public Signal waveAt(int index) {
-        return waveViewModel.getWaveform(index).getSignal();
+    public TimeSeries waveAt(int index) {
+        return waveViewModel.getWaveform(index).getTimeSeries();
     }
 }

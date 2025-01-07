@@ -127,7 +127,7 @@ public class WaveformPanel extends JPanel implements Scrollable, MouseMotionList
             int lowerY = y + wavevizObject.getWaveRowHeight() - wavevizObject.getWaveYPadding();
 
             var wf = model.getWaveform(i);
-            var signal = wf.getSignal();
+            var signal = wf.getTimeSeries();
 
             int startTime = timeFromXCoordinate(clipBounds.x);
             int maxTime = model.getEndTime();
@@ -138,7 +138,7 @@ public class WaveformPanel extends JPanel implements Scrollable, MouseMotionList
 
             for (int t = startTime, x = xCoordinateFromTime(startTime);
                  x < clipBounds.x + clipBounds.width && t <= maxTime; ) {
-                TimeRange tr = signal.getValue(t);
+                TimeSpan tr = signal.getValue(t);
                 int rightX = x + pixelsOfTimeSpan(tr.getEndTime() - t + 1);
                 if (signal.getWidth() == 1) {
                     if (tr.getValue().equals("0")) {

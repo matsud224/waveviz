@@ -35,12 +35,12 @@ public class ValueChangeStore {
         return Math.max(high, 0);
     }
 
-    public TimeRange getValue(int time) {
+    public TimeSpan getValue(int time) {
         int startingPos = searchStartingTime(time);
         if (startingPos == timeArray.size() - 1)
-            return new TimeRange(timeArray.get(startingPos), timeArray.get(startingPos), valueArray.get(startingPos));
+            return new TimeSpan(timeArray.get(startingPos), timeArray.get(startingPos), valueArray.get(startingPos));
         else
-            return new TimeRange(timeArray.get(startingPos), timeArray.get(startingPos + 1) - 1, valueArray.get(startingPos));
+            return new TimeSpan(timeArray.get(startingPos), timeArray.get(startingPos + 1) - 1, valueArray.get(startingPos));
     }
 
     public int getStartTime() {

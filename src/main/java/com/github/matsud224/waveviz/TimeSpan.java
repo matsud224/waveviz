@@ -1,14 +1,12 @@
 package com.github.matsud224.waveviz;
 
-public class TimeRange {
+public class TimeSpan {
     private final int startTime;
     private final int endTime;
-    private final String value;
 
-    public TimeRange(int startTime, int endTime, String value) {
+    public TimeSpan(int startTime, int endTime) {
         this.startTime = startTime;
         this.endTime = endTime;
-        this.value = value;
     }
 
     public int getStartTime() {
@@ -17,9 +15,5 @@ public class TimeRange {
 
     public int getEndTime() {
         return endTime;
-    }
-
-    public String getValue() {
-        return value;
     }
 }

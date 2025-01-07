@@ -156,7 +156,7 @@ public class RootFrame extends JFrame implements ActionListener, WindowListener 
                 if (waveViewModel.getSelectedIndex().isPresent()) {
                     Waveform selected = waveViewModel.getWaveform(waveViewModel.getSelectedIndex().get());
                     int time = waveViewModel.getCursor().getTime();
-                    TimeRange tr = selected.getSignal().getValue(Math.max(0, time - 1));
+                    TimeSpan tr = selected.getTimeSeries().getValue(Math.max(0, time - 1));
                     waveViewModel.getCursor().setTime(tr.getStartTime());
                     paneManager.getWaveViewPane().scrollToCursor();
                 }
@@ -165,7 +165,7 @@ public class RootFrame extends JFrame implements ActionListener, WindowListener 
                 if (waveViewModel.getSelectedIndex().isPresent()) {
                     Waveform selected = waveViewModel.getWaveform(waveViewModel.getSelectedIndex().get());
                     int time = waveViewModel.getCursor().getTime();
-                    TimeRange tr = selected.getSignal().getValue(time);
+                    TimeSpan tr = selected.getTimeSeries().getValue(time);
                     waveViewModel.getCursor().setTime(Math.min(tr.getEndTime() + 1, waveViewModel.getEndTime()));
                     paneManager.getWaveViewPane().scrollToCursor();
                 }

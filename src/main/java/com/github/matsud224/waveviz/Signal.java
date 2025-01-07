@@ -30,13 +30,12 @@ public class Signal implements TimeSeries {
         return width;
     }
 
-    @Override
     public void addChange(int time, String numStr) {
         valueChangeStore.addChange(time, numStr);
     }
 
     @Override
-    public TimeRange getValue(int time) {
+    public TimeSpan getValue(int time) {
         return valueChangeStore.getValue(time);
     }
 
